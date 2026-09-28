@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tools/coordenadas.txt
+*.egg-info/
+dist/
+build/
+.env
+.idea/
+.vscode/
