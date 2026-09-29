@@ -1,10 +1,9 @@
 """
-Parte 3 da automação SAP (trecho inicial — passos 1–14).
+Parte 3 da automação SAP.
 
-Formulário no início:
-  invoice, issue_date, material, quantidade, price, description, cfop, plant
-
-Invoice no SAP: "000" + valor informado.
+No fluxo completo (main.py), invoice/issue_date vêm da tela após a Parte 1
+e material/quantidade/price/description/cfop do formulário pós Parte 1.
+Aqui só pede Plant (ou o formulário completo se rodar sozinha).
 """
 
 from __future__ import annotations
@@ -23,8 +22,12 @@ from automation import abort, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+import config
 
 win_mouse.ensure_dpi_awareness()
+
+WAIT_TAX_OPTION = 1.2
+CHAR_INTERVAL_TAX = 0.2
 
 FORM_FIELDS = [
     ("invoice", "Invoice (sem os 000)"),
@@ -40,13 +43,40 @@ FORM_FIELDS = [
 
 def _clean(value):
     # type: (str) -> str
-    """Remove espaços no início/fim (inclui NBSP colado de planilha)."""
     return value.replace("\xa0", " ").strip()
+
+
+def _tax_row(label, x_type, y_type, code, x_pick, y_pick):
+    # type: (str, int, int, str, int, int) -> list
+    """Digita letra a letra, espera opção, clique com mexida L/R."""
+    return [
+        Step(
+            "click_and_type",
+            x=x_type,
+            y=y_type,
+            text=code,
+            type_slowly=True,
+            char_interval=CHAR_INTERVAL_TAX,
+            wait_after=WAIT_TAX_OPTION,
+            label="{} — Digitar {} (letra a letra)".format(label, code),
+        ),
+        Step(
+            "click",
+            x=x_pick,
+            y=y_pick,
+            wiggle_x=20,
+            label="{} — Clique na opção {}".format(label, code),
+        ),
+    ]
 
 
 def build_steps(data):
     # type: (dict) -> list
-    invoice = "000" + _clean(data["invoice"])
+    invoice_raw = _clean(data["invoice"])
+    if invoice_raw.startswith("000"):
+        invoice = invoice_raw
+    else:
+        invoice = "000" + invoice_raw
     issue_date = _clean(data["issue_date"])
     material = _clean(data["material"])
     quantidade = _clean(data["quantidade"])
@@ -55,7 +85,7 @@ def build_steps(data):
     cfop = _clean(data["cfop"])
     plant = _clean(data["plant"])
 
-    return [
+    steps = [
         Step(
             "click_and_type",
             x=-1741,
@@ -86,100 +116,113 @@ def build_steps(data):
         ),
         Step(
             "click_and_type",
-            x=-1706,
-            y=393,
+            x=-1705,
+            y=396,
             text=material,
             label="5 — Clique e escrever Material",
         ),
         Step(
             "click_and_type",
-            x=-1636,
-            y=393,
-            text=quantidade,
-            label="6 — Clique e escrever Quantidade",
-        ),
-        Step(
-            "click_and_type",
-            x=-1551,
-            y=392,
-            text=price,
-            label="7 — Clique e escrever Price",
-        ),
-        Step(
-            "click_and_type",
-            x=-1348,
-            y=393,
+            x=-1584,
+            y=396,
             text=description,
-            label="8 — Clique e escrever Description",
+            label="6 — Clique e escrever Description",
         ),
         Step(
             "click_and_type",
-            x=-1136,
-            y=392,
+            x=-1390,
+            y=396,
+            text=quantidade,
+            label="7 — Clique e escrever Quantidade",
+        ),
+        Step(
+            "click_and_type",
+            x=-1291,
+            y=396,
+            text=price,
+            label="8 — Clique e escrever Price",
+        ),
+        Step(
+            "click_and_type",
+            x=-1149,
+            y=396,
             text=cfop,
             label="9 — Clique e escrever CFOP",
         ),
-        Step(
-            "click_and_type",
-            x=-1051,
-            y=392,
-            text="IC9",
-            tab_after=True,
-            label="10 — Clique, escrever IC9 e TAB",
-        ),
-        Step(
-            "click_and_type",
-            x=-1022,
-            y=394,
-            text="I49",
-            tab_after=True,
-            label="11 — Clique, escrever I49 e TAB",
-        ),
-        Step(
-            "click_and_type",
-            x=-994,
-            y=392,
-            text="C70",
-            tab_after=True,
-            label="12 — Clique, escrever C70 e TAB",
-        ),
-        Step(
-            "click_and_type",
-            x=-966,
-            y=394,
-            text="P70",
-            tab_after=True,
-            label="13 — Clique, escrever P70 e TAB",
-        ),
-        Step(
-            "click_and_type",
-            x=-861,
-            y=393,
-            text=plant,
-            label="14 — Clique e escrever PLANT",
-        ),
     ]
 
+    steps.extend(_tax_row("10 ICMS", -1074, 396, "IC9", -1023, 434))
+    steps.extend(_tax_row("11 IPI", -1005, 396, "I49", -977, 434))
+    steps.extend(_tax_row("12 COFINS", -957, 396, "C70", -921, 434))
+    steps.extend(_tax_row("13 PIS", -906, 393, "P70", -879, 434))
 
-def main(dry_run=False, chained=False, show_done=True):
-    # type: (bool, bool, bool) -> bool
-    data = ask_fields(
-        title="Parte 3 — Dados do documento",
-        fields=FORM_FIELDS,
-        start_label="Iniciar Parte 3",
+    steps.extend(
+        [
+            Step(
+                "click_and_type",
+                x=-848,
+                y=392,
+                text=plant,
+                label="14 — Clique e escrever PLANT",
+            ),
+            Step(
+                "click_and_press",
+                x=-1788,
+                y=396,
+                keys=["enter"],
+                press_times=2,
+                press_interval=0.3,
+                label="15 — Clique e Enter x2",
+            ),
+            Step(
+                "click",
+                x=-1886,
+                y=392,
+                label="16 — Clique",
+            ),
+            Step(
+                "click",
+                x=-1624,
+                y=958,
+                label="17 — Clique (fim Parte 3)",
+            ),
+        ]
     )
-    if data is None:
-        print("Cancelado pelo usuário.")
-        return False
+    return steps
 
-    # Limpa espaços (ex.: " 5000.00", " 0.26")
-    data = {k: _clean(v) for k, v in data.items()}
+
+def main(dry_run=False, chained=False, show_done=True, prefill=None):
+    # type: (bool, bool, bool, object) -> bool
+    prefill = dict(prefill) if prefill else {}
+
+    if prefill:
+        plant_form = ask_fields(
+            title="Parte 3 — Plant",
+            fields=[("plant", "Plant")],
+            start_label="Iniciar Parte 3",
+        )
+        if plant_form is None:
+            print("Cancelado pelo usuário.")
+            return False
+        data = {k: _clean(v) for k, v in prefill.items()}
+        data["plant"] = _clean(plant_form["plant"])
+    else:
+        data = ask_fields(
+            title="Parte 3 — Dados do documento",
+            fields=FORM_FIELDS,
+            start_label="Iniciar Parte 3",
+        )
+        if data is None:
+            print("Cancelado pelo usuário.")
+            return False
+        data = {k: _clean(v) for k, v in data.items()}
 
     print("Parte 3 — dados:")
     for key, _label in FORM_FIELDS:
-        shown = data[key]
+        shown = data.get(key, "")
         if key == "invoice":
-            shown = "000" + data[key]
+            inv = _clean(shown)
+            shown = inv if inv.startswith("000") else "000" + inv
         print("  {}: {!r}".format(key, shown))
 
     if not chained:
@@ -188,18 +231,15 @@ def main(dry_run=False, chained=False, show_done=True):
     try:
         if not dry_run:
             if chained:
-                countdown(6, "Dados da Parte 3 ok.\nVolte ao SAP — iniciando em...")
+                countdown(config.COUNTDOWN_PART3, "Dados da Parte 3 ok.\nVolte ao SAP — iniciando em...")
             else:
-                countdown(7, "Foque a tela do SAP!\nIniciando Parte 3 em...")
+                countdown(config.COUNTDOWN_PART3_SOLO, "Foque a tela do SAP!\nIniciando Parte 3 em...")
 
         run_steps(build_steps(data), dry_run=dry_run)
 
-        print("\nParte 3 (trecho atual) concluída.")
+        print("\nParte 3 concluída.")
         if show_done and not dry_run:
-            messagebox.showinfo(
-                "Parte 3",
-                "Parte 3 (passos 1–14) concluída.\nQuando tiver o restante, seguimos.",
-            )
+            messagebox.showinfo("Parte 3", "Parte 3 concluída com sucesso.")
         return True
     except abort.AbortedError:
         messagebox.showwarning(

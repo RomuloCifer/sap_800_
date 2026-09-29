@@ -12,16 +12,19 @@ def ask_fields(
     title,
     fields,
     start_label="Iniciar",
+    defaults=None,
 ):
-    # type: (str, List[Tuple[str, str]], str) -> Optional[Dict[str, str]]
+    # type: (str, List[Tuple[str, str]], str, Optional[Dict[str, str]]) -> Optional[Dict[str, str]]
     """
     Abre um formulário simples.
 
     fields: lista de (chave, rótulo), ex.: [("batch", "Batch number")]
+    defaults: valores iniciais opcionais por chave
     Retorna dict com os valores, ou None se cancelar.
     """
     result = {}  # type: Dict[str, str]
     cancelled = {"value": True}
+    defaults = defaults or {}
 
     root = tk.Tk()
     root.title(title)
@@ -47,6 +50,8 @@ def ask_fields(
         ).grid(row=row, column=0, sticky="w", padx=(0, 12), pady=4)
         entry = tk.Entry(root, font=("Consolas", 11), width=28)
         entry.grid(row=row, column=1, sticky="ew", pady=4)
+        if key in defaults and defaults[key]:
+            entry.insert(0, defaults[key])
         entries[key] = entry
 
     if fields:

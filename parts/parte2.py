@@ -1,14 +1,7 @@
 """
 Parte 2 da automação SAP.
 
-Fluxo:
-  1. Confirmação / contagem para focar o SAP (pulados se chained=True)
-  2. Passos 1–6 (fixos)
-  3. Formulário: ISSUER SAP
-  4. Contagem de 3 s
-  5. Passos 7–8
-
-Retorna True se concluiu com sucesso, False se cancelou/erro.
+Quando vem da Parte 1 com issuer_sap já capturado, não pede formulário.
 """
 
 from __future__ import annotations
@@ -27,6 +20,7 @@ from automation import abort, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+import config
 
 win_mouse.ensure_dpi_awareness()
 
@@ -74,8 +68,8 @@ def build_steps_before_issuer():
             "click",
             x=-1692,
             y=329,
-            wait_after=1.5,
-            label="6a — Clique (espera 1,5s)",
+            wait_after=config.WAIT_BETWEEN_DROPDOWN,
+            label="6a — Clique (espera dropdown)",
         ),
         Step(
             "click",
@@ -106,10 +100,11 @@ def build_steps_after_issuer(issuer_sap):
     ]
 
 
-def main(dry_run=False, chained=False, show_done=True):
-    # type: (bool, bool, bool) -> bool
+def main(dry_run=False, chained=False, show_done=True, issuer_sap=None):
+    # type: (bool, bool, bool, object) -> bool
     """
-    chained=True: veio direto da Parte 1 — sem confirmação nem contagem inicial.
+    chained=True: veio da Parte 1.
+    issuer_sap: se informado, não abre formulário (capturado da tela).
     """
     if not chained:
         if not messagebox.askokcancel(
@@ -127,26 +122,28 @@ def main(dry_run=False, chained=False, show_done=True):
     try:
         if not dry_run:
             if chained:
-                countdown(2, "Parte 1 ok.\nIniciando Parte 2 em...")
+                countdown(config.COUNTDOWN_BETWEEN_PARTS, "Parte 1 ok.\nIniciando Parte 2 em...")
             else:
-                countdown(5, "Foque a tela do SAP!\nIniciando Parte 2 em...")
+                countdown(config.COUNTDOWN_START, "Foque a tela do SAP!\nIniciando Parte 2 em...")
 
         run_steps(build_steps_before_issuer(), dry_run=dry_run)
 
-        data = ask_fields(
-            title="Parte 2 — ISSUER SAP",
-            fields=[("issuer_sap", "ISSUER SAP")],
-            start_label="Continuar",
-        )
-        if data is None:
-            print("Cancelado no formulário ISSUER SAP.")
-            return False
-
-        issuer = data["issuer_sap"]
-        print("ISSUER SAP informado: {}".format(issuer))
-
-        if not dry_run:
-            countdown(3, "Volte para o SAP!\nContinuando em...")
+        if issuer_sap:
+            issuer = issuer_sap.strip()
+            print("ISSUER SAP (capturado): {!r}".format(issuer))
+        else:
+            data = ask_fields(
+                title="Parte 2 — ISSUER SAP",
+                fields=[("issuer_sap", "ISSUER SAP")],
+                start_label="Continuar",
+            )
+            if data is None:
+                print("Cancelado no formulário ISSUER SAP.")
+                return False
+            issuer = data["issuer_sap"].strip()
+            print("ISSUER SAP informado: {}".format(issuer))
+            if not dry_run:
+                countdown(config.COUNTDOWN_AFTER_ISSUER, "Volte para o SAP!\nContinuando em...")
 
         run_steps(build_steps_after_issuer(issuer), dry_run=dry_run)
 

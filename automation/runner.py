@@ -43,6 +43,11 @@ class Step:
     delete_times: int = 0
     wiggle_x: int = 0
     tab_after: bool = False  # apertar Tab depois de digitar
+    press_times: int = 1  # quantas vezes apertar a tecla (kind=press)
+    press_interval: float = 0.25  # intervalo entre repetições da tecla
+    # Digitar caractere a caractere (dispara autocomplete do SAP)
+    type_slowly: bool = False
+    char_interval: float = 0.2
 
 
 def _type_text(text):
@@ -54,14 +59,24 @@ def _type_text(text):
         _keyboard.release("v")
 
 
-def _press_key(name, times=1):
-    # type: (str, int) -> None
+def _type_chars(text, interval=0.2):
+    # type: (str, float) -> None
+    """Digita letra a letra (necessário para listas/autocomplete do SAP)."""
+    for ch in text:
+        abort.check()
+        _keyboard.type(ch)
+        _sleep(interval)
+
+
+def _press_key(name, times=1, interval=0.05):
+    # type: (str, int, float) -> None
     key = _KEY_MAP.get(name.lower(), name)
-    for _ in range(times):
+    for i in range(times):
         abort.check()
         _keyboard.press(key)
         _keyboard.release(key)
-        time.sleep(0.05)
+        if i + 1 < times:
+            _sleep(interval)
 
 
 def _sleep(seconds):
@@ -101,24 +116,39 @@ def run_steps(steps, dry_run=False, step_pause=DEFAULT_STEP_PAUSE, click_type_de
                 win_mouse.click(step.x, step.y, clicks=1, wiggle_x=step.wiggle_x)
                 _sleep(click_type_delay)
                 if step.delete_times:
-                    _press_key("delete", step.delete_times)
+                    _press_key("delete", step.delete_times, interval=0.05)
                     _sleep(0.1)
-                _type_text(step.text)
+                if step.type_slowly:
+                    _type_chars(step.text, interval=step.char_interval)
+                else:
+                    _type_text(step.text)
                 if step.tab_after:
                     _sleep(0.35)
                     _press_key("tab", 1)
                     _sleep(0.25)
             elif step.kind == "type":
                 assert step.text is not None
-                _type_text(step.text)
+                if step.type_slowly:
+                    _type_chars(step.text, interval=step.char_interval)
+                else:
+                    _type_text(step.text)
                 if step.tab_after:
                     _sleep(0.35)
                     _press_key("tab", 1)
                     _sleep(0.25)
             elif step.kind == "press":
                 assert step.keys
-                times = int(step.seconds) if step.seconds and step.seconds >= 1 else 1
-                _press_key(step.keys[0], times=max(1, times))
+                times = step.press_times if step.press_times > 0 else 1
+                if step.seconds and step.seconds >= 1 and step.press_times <= 1:
+                    times = int(step.seconds)
+                _press_key(step.keys[0], times=times, interval=step.press_interval)
+            elif step.kind == "click_and_press":
+                assert step.x is not None and step.y is not None
+                assert step.keys
+                win_mouse.click(step.x, step.y, clicks=1, wiggle_x=step.wiggle_x)
+                _sleep(click_type_delay)
+                times = step.press_times if step.press_times > 0 else 1
+                _press_key(step.keys[0], times=times, interval=step.press_interval)
             elif step.kind == "wait":
                 _sleep(step.seconds)
             else:

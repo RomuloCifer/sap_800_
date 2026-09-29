@@ -134,3 +134,38 @@ def click(x, y, clicks=1, interval=0.08, wiggle_x=0):
         _send_mouse(MOUSEEVENTF_LEFTUP | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK, abs_x, abs_y)
         if i + 1 < clicks:
             time.sleep(interval)
+
+def drag_select(x1, y1, x2, y2, steps=12):
+    # type: (int, int, int, int, int) -> None
+    """Segura o botao esquerdo de (x1,y1) ate (x2,y2) para selecionar texto."""
+    ensure_dpi_awareness()
+    move_to(x1, y1)
+    time.sleep(0.08)
+    abs1 = _to_absolute(x1, y1)
+    _send_mouse(
+        MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
+        abs1[0],
+        abs1[1],
+    )
+    time.sleep(0.05)
+    for i in range(1, steps + 1):
+        t = float(i) / steps
+        x = int(round(x1 + (x2 - x1) * t))
+        y = int(round(y1 + (y2 - y1) * t))
+        move_to(x, y)
+        abs_xy = _to_absolute(x, y)
+        _send_mouse(
+            MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
+            abs_xy[0],
+            abs_xy[1],
+        )
+        time.sleep(0.015)
+    move_to(x2, y2)
+    time.sleep(0.05)
+    abs2 = _to_absolute(x2, y2)
+    _send_mouse(
+        MOUSEEVENTF_LEFTUP | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK,
+        abs2[0],
+        abs2[1],
+    )
+    time.sleep(0.1)

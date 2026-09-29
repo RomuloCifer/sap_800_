@@ -25,10 +25,9 @@ from automation import abort, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+import config
 
 win_mouse.ensure_dpi_awareness()
-
-COUNTDOWN_SECONDS = 5
 
 
 def build_steps(batch):
@@ -38,6 +37,7 @@ def build_steps(batch):
             "double_click",
             x=-1150,
             y=530,
+            wait_after=config.WAIT_AFTER_OPEN_SAP,
             label="1 — Duplo clique (abrir/focar)",
         ),
         Step(
@@ -45,14 +45,15 @@ def build_steps(batch):
             x=-1827,
             y=58,
             text="/n/lkmt/ardfe",
+            wiggle_x=20,
             label="2 — Clique e escrever /n/lkmt/ardfe",
         ),
         Step(
             "click",
             x=-1895,
             y=53,
-            seconds=3.0,
-            label="4 — Clique e esperar 3 segundos",
+            seconds=config.WAIT_AFTER_EXECUTE,
+            label="4 — Clique e esperar (executar)",
         ),
         Step(
             "click",
@@ -82,6 +83,26 @@ def build_steps(batch):
             label="8 — Clique e escrever BATCH",
         ),
         Step(
+            "click_and_type",
+            x=-1629,
+            y=373,
+            text="01.02.2025",
+            delete_times=11,
+            label="8b — Clique, Delete x11, escrever 01.02.2025",
+        ),
+        Step(
+            "click",
+            x=-1506,
+            y=766,
+            label="8c — Clique",
+        ),
+        Step(
+            "click",
+            x=-1627,
+            y=787,
+            label="8d — Clique",
+        ),
+        Step(
             "click",
             x=-1891,
             y=123,
@@ -91,7 +112,8 @@ def build_steps(batch):
             "click",
             x=-1869,
             y=123,
-            label="10 — Clique",
+            wait_after=2.0,
+            label="10 — Clique e esperar 2s",
         ),
     ]
 
@@ -100,21 +122,34 @@ def main(dry_run=False, show_done=True):
     # type: (bool, bool) -> bool
     data = ask_fields(
         title="Parte 1 — Automação SAP",
-        fields=[("batch", "Batch number")],
+        fields=[
+            ("batch", "Batch number"),
+            ("tempo_espera", "Tempo de espera (segundos)"),
+        ],
         start_label="Iniciar Parte 1",
+        defaults={"tempo_espera": "3"},
     )
     if data is None:
         print("Cancelado pelo usuário.")
         return False
 
     batch = data["batch"]
+    try:
+        config.apply_user_wait(config.parse_wait(data["tempo_espera"]))
+    except ValueError:
+        messagebox.showerror(
+            "Tempo inválido",
+            "Informe um número válido para o tempo de espera (ex.: 3 ou 1,5).",
+        )
+        return False
+
     print("Batch informado: {}".format(batch))
     steps = build_steps(batch)
 
     abort.start_listener()
     try:
         if not dry_run:
-            countdown(COUNTDOWN_SECONDS, "Foque a tela do SAP!\nIniciando em...")
+            countdown(config.COUNTDOWN_START, "Foque a tela do SAP!\nIniciando em...")
         run_steps(steps, dry_run=dry_run)
         print("\nParte 1 concluída.")
         if show_done and not dry_run:
