@@ -106,11 +106,24 @@ def _send_mouse(flags, x=0, y=0):
     ctypes.windll.user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(INPUT))
 
 
-def click(x, y, clicks=1, interval=0.08):
-    # type: (int, int, int, float) -> None
-    """Move para (x,y) e clica com botão esquerdo (1=simples, 2=duplo)."""
+def click(x, y, clicks=1, interval=0.08, wiggle_x=0):
+    # type: (int, int, int, float, int) -> None
+    """
+    Move para (x,y) e clica com botão esquerdo (1=simples, 2=duplo).
+
+    wiggle_x > 0: mexe o mouse para a direita/esquerda (mesmo Y) antes do clique,
+    útil para “acordar” o foco de listas/dropdowns no SAP.
+    """
     ensure_dpi_awareness()
     move_to(x, y)
+    if wiggle_x:
+        px = abs(int(wiggle_x))
+        move_to(x + px, y)
+        time.sleep(0.08)
+        move_to(x - px, y)
+        time.sleep(0.08)
+        move_to(x, y)
+        time.sleep(0.1)
     abs_x, abs_y = _to_absolute(x, y)
     flags_move = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK
     _send_mouse(flags_move, abs_x, abs_y)

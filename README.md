@@ -47,27 +47,19 @@ Use isso para ir anotando onde cada clique da sequência deve cair.
 | `pytesseract` | OCR (precisa do [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki) instalado no Windows) |
 | `pyperclip` | Área de transferência |
 
-## Rodar a Parte 1
+## Rodar o fluxo completo (Parte 1 → Parte 2)
 
-Com a venv ativa e o SAP aberto no monitor da esquerda:
+```powershell
+python main.py
+```
+
+1. Formulário **Batch** → Parte 1  
+2. Em seguida entra na Parte 2 (pausa de 2 s)  
+3. No meio da Parte 2: formulário **ISSUER SAP** → 3 s → restante  
+
+Para rodar só uma parte:
 
 ```powershell
 python parts\parte1.py
+python parts\parte2.py
 ```
-
-1. Abre um formulário pedindo o **Batch number**
-2. Contagem de 3 segundos (tempo para focar o SAP)
-3. Executa a sequência (espera padrão **0,8 s** entre passos; passo 4 espera **3 s**)
-
-Simulação sem clicar de verdade:
-
-```powershell
-python parts\parte1.py --dry-run
-```
-
-Abortar emergencialmente: leve o mouse ao **canto superior esquerdo** da tela principal (fail-safe do PyAutoGUI).
-
-## Próximos passos
-
-1. Validar a Parte 1 no SAP real
-2. Mapear e implementar a Parte 2 (novo formulário + sequência)

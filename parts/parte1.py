@@ -5,12 +5,13 @@ Fluxo:
   1. Formulário pede o Batch
   2. Contagem regressiva visual (tempo para focar a tela do SAP)
   3. Executa a sequência de cliques/digitação
+
+Retorna True se concluiu com sucesso, False se cancelou/erro.
 """
 
 from __future__ import annotations
 
 import sys
-import time
 import traceback
 from pathlib import Path
 
@@ -18,12 +19,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import tkinter as tk
 from tkinter import messagebox
 
-from automation import win_mouse
+from automation import abort, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
+from automation.ui import countdown
 
 win_mouse.ensure_dpi_awareness()
 
@@ -36,7 +37,7 @@ def build_steps(batch):
         Step(
             "double_click",
             x=-1150,
-            y=544,
+            y=530,
             label="1 — Duplo clique (abrir/focar)",
         ),
         Step(
@@ -95,47 +96,8 @@ def build_steps(batch):
     ]
 
 
-def countdown(seconds=COUNTDOWN_SECONDS):
-    # type: (int) -> None
-    root = tk.Tk()
-    root.title("Aguarde")
-    root.attributes("-topmost", True)
-    root.resizable(False, False)
-    root.configure(bg="#1a1a2e", padx=24, pady=20)
-
-    tk.Label(
-        root,
-        text="Foque a tela do SAP!\nIniciando em...",
-        font=("Segoe UI", 12),
-        fg="#e0e0e0",
-        bg="#1a1a2e",
-        justify="center",
-    ).pack()
-
-    number = tk.Label(
-        root,
-        text=str(seconds),
-        font=("Consolas", 28, "bold"),
-        fg="#7CFC00",
-        bg="#1a1a2e",
-    )
-    number.pack(pady=(8, 0))
-
-    root.update_idletasks()
-    w = root.winfo_width()
-    sw = root.winfo_screenwidth()
-    root.geometry("+{}+40".format((sw - w) // 2))
-
-    for n in range(seconds, 0, -1):
-        number.config(text=str(n))
-        root.update()
-        time.sleep(1)
-
-    root.destroy()
-
-
-def main(dry_run=False):
-    # type: (bool) -> None
+def main(dry_run=False, show_done=True):
+    # type: (bool, bool) -> bool
     data = ask_fields(
         title="Parte 1 — Automação SAP",
         fields=[("batch", "Batch number")],
@@ -143,19 +105,24 @@ def main(dry_run=False):
     )
     if data is None:
         print("Cancelado pelo usuário.")
-        return
+        return False
 
     batch = data["batch"]
     print("Batch informado: {}".format(batch))
     steps = build_steps(batch)
 
+    abort.start_listener()
     try:
         if not dry_run:
-            countdown()
+            countdown(COUNTDOWN_SECONDS, "Foque a tela do SAP!\nIniciando em...")
         run_steps(steps, dry_run=dry_run)
         print("\nParte 1 concluída.")
-        if not dry_run:
+        if show_done and not dry_run:
             messagebox.showinfo("Parte 1", "Parte 1 concluída com sucesso.")
+        return True
+    except abort.AbortedError:
+        messagebox.showwarning("Abortado", "Parte 1 interrompida ({}).".format(abort.ABORT_KEY_NAME))
+        return False
     except Exception as exc:
         print("ERRO:", exc)
         traceback.print_exc()
@@ -163,6 +130,10 @@ def main(dry_run=False):
             "Erro na Parte 1",
             "A automação falhou:\n\n{}".format(exc),
         )
+        return False
+    finally:
+        if show_done:
+            abort.stop_listener()
 
 
 if __name__ == "__main__":
