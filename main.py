@@ -51,7 +51,7 @@ FORM_AFTER_P1 = [
     ("quantidade", "Quantidade"),
     ("price", "Price"),
     ("description", "Description"),
-    ("cfop", "CFOP"),
+    ("cfop", "CFOP (sem /AA)"),
     ("protocol_no", "PROTOCOL NO"),
     ("proc_date", "PROC DATE (dd.mm.yyyy)"),
     ("proc_time", "PROC TIME (hh:mm:ss)"),
@@ -129,7 +129,7 @@ def main(dry_run=False, stop_after=None):
                 "quantidade": _clean(form["quantidade"]),
                 "price": _clean(form["price"]),
                 "description": _clean(form["description"]),
-                "cfop": _clean(form["cfop"]),
+                "cfop": _clean(form["cfop"]),  # /AA é acrescentado na Parte 3
             }
             part4_data = {
                 "protocol_no": _clean(form["protocol_no"]),

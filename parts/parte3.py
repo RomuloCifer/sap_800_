@@ -3,7 +3,7 @@ Parte 3 da automação SAP.
 
 No fluxo completo (main.py), invoice/issue_date vêm da tela após a Parte 1
 e material/quantidade/price/description/cfop do formulário pós Parte 1.
-Aqui só pede Plant (ou o formulário completo se rodar sozinha).
+Aqui usa Plant fixo 1502 (ou o formulário completo se rodar sozinha, sem pedir Plant).
 """
 
 from __future__ import annotations
@@ -36,14 +36,24 @@ FORM_FIELDS = [
     ("quantidade", "Quantidade"),
     ("price", "Price"),
     ("description", "Description"),
-    ("cfop", "CFOP"),
-    ("plant", "Plant"),
+    ("cfop", "CFOP (sem /AA)"),
 ]
+
+PLANT_FIXO = "1502"
 
 
 def _clean(value):
     # type: (str) -> str
     return value.replace("\xa0", " ").strip()
+
+
+def _cfop_with_aa(value):
+    # type: (str) -> str
+    """Garante sufixo /AA (ex.: 1934 → 1934/AA)."""
+    cfop = _clean(value)
+    if not cfop.upper().endswith("/AA"):
+        cfop = cfop + "/AA"
+    return cfop
 
 
 def _tax_row(label, x_type, y_type, code, x_pick, y_pick):
@@ -82,8 +92,8 @@ def build_steps(data):
     quantidade = _clean(data["quantidade"])
     price = _clean(data["price"])
     description = _clean(data["description"])
-    cfop = _clean(data["cfop"])
-    plant = _clean(data["plant"])
+    cfop = _cfop_with_aa(data["cfop"])
+    plant = PLANT_FIXO
 
     steps = [
         Step(
@@ -196,16 +206,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     prefill = dict(prefill) if prefill else {}
 
     if prefill:
-        plant_form = ask_fields(
-            title="Parte 3 — Plant",
-            fields=[("plant", "Plant")],
-            start_label="Iniciar Parte 3",
-        )
-        if plant_form is None:
-            print("Cancelado pelo usuário.")
-            return False
         data = {k: _clean(v) for k, v in prefill.items()}
-        data["plant"] = _clean(plant_form["plant"])
     else:
         data = ask_fields(
             title="Parte 3 — Dados do documento",
@@ -217,13 +218,18 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
             return False
         data = {k: _clean(v) for k, v in data.items()}
 
+    data["plant"] = PLANT_FIXO
+
     print("Parte 3 — dados:")
     for key, _label in FORM_FIELDS:
         shown = data.get(key, "")
         if key == "invoice":
             inv = _clean(shown)
             shown = inv if inv.startswith("000") else "000" + inv
+        elif key == "cfop":
+            shown = _cfop_with_aa(shown)
         print("  {}: {!r}".format(key, shown))
+    print("  plant: {!r} (FIXO)".format(PLANT_FIXO))
 
     if not chained:
         abort.start_listener()
