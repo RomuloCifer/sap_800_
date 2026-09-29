@@ -23,22 +23,43 @@ CALIBRATION_FILE = ROOT / "calibration.json"
 REFERENCE_POINTS = [
     {
         "id": "cmd",
-        "label": "Barra de comando SAP (campo onde digita /n/...)",
-        "hint": "Abra o SAP e deixe a barra de comando visível.",
+        "label": "1) Barra de comando (campo branco onde digita /n/...)",
+        "hint": (
+            "Janela do SAP aberta. Clique no meio do campo de comando "
+            "(barra superior, onde se digita a transação)."
+        ),
         "x": -1827,
         "y": 58,
     },
     {
         "id": "empresa",
-        "label": "Campo Empresa (onde digita 1300 na Parte 1)",
-        "hint": "Tela do /lkmt/ardfe com os campos de seleção visíveis.",
+        "label": "2) Campo Empresa (onde a automação digita 1300)",
+        "hint": (
+            "Entre em /n/lkmt/ardfe e deixe a tela de seleção aberta. "
+            "Clique no meio do campo Empresa (primeiro campo numérico da lista)."
+        ),
         "x": -1616,
         "y": 267,
     },
     {
-        "id": "baixo",
-        "label": "Área inferior (botões/região de baixo da mesma tela)",
-        "hint": "Mesma tela; clique na região inferior usada no passo 8c.",
+        "id": "data",
+        "label": "3) Campo da DATA (onde digita 01.02.2025)",
+        "hint": (
+            "Na MESMA tela de seleção. Clique no meio do campo de data "
+            "(abaixo de Empresa / Batch — NÃO clique embaixo da janela)."
+        ),
+        "x": -1629,
+        "y": 373,
+    },
+    {
+        "id": "rodape",
+        "label": "4) Bem EMBAIXO da janela do SAP (rodapé da tela de seleção)",
+        "hint": (
+            "Ainda na mesma tela. Desça o mouse até a parte inferior da "
+            "janela do SAP (região de botões/checkboxes de baixo). "
+            "NÃO use a barra de tarefas do Windows. "
+            "O Y precisa ficar bem mais baixo que o campo da data."
+        ),
         "x": -1506,
         "y": 766,
     },

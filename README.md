@@ -46,18 +46,26 @@ As coordenadas do projeto são da **máquina de referência**. Em outro PC
 python tools\calibrate.py
 ```
 
-1. Abra o SAP na mesma tela da Parte 1 (barra de comando + campos visíveis).  
-2. Clique (posicione o mouse) nos 3 pontos pedidos e pressione **F8** em cada um.  
-3. Isso gera `calibration.json` na raiz do projeto.
+Antes: abra o SAP e entre em `/n/lkmt/ardfe` (tela de seleção com os campos visíveis).
 
-A partir daí, `main.py` e as partes usam o mapa automaticamente.
+Depois posicione o mouse e aperte **F8** em cada ponto:
+
+1. **Barra de comando** (campo onde digita `/n/...`)
+2. **Campo Empresa** (onde digita `1300`)
+3. **Campo da DATA** (onde digita `01.02.2025`) — não é o rodapé
+4. **Rodapé da janela do SAP** (bem embaixo, ainda dentro do SAP — não a barra de tarefas do Windows)
+
+No fim o mouse passa pelos pontos mapeados para conferir. **F8** salva, **R** refaz, **ESC** cancela.
+Isso gera `calibration.json` na raiz do projeto.
+
 **Nesta máquina de referência:** não rode a calibração — sem o arquivo, nada muda.
+Ao abrir o assistente, qualquer `calibration.json` antigo é apagado automaticamente; só grava de novo se você confirmar com F8 no final.
 
 | Comando | Ação |
 |---------|------|
-| `python tools\calibrate.py` | Criar/atualizar calibração |
+| `python tools\calibrate.py` | Limpa + criar calibração |
 | `python tools\calibrate.py --status` | Ver se há calibração |
-| `python tools\calibrate.py --clear` | Remover e voltar ao mapa original |
+| `python tools\calibrate.py --clear` | Só remover (sem abrir o assistente) |
 
 ## Dependências instaladas
 

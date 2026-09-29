@@ -5,7 +5,7 @@ A outra pessoa clica nos mesmos lugares da UI que você mapeou.
 O programa grava calibration.json com escala + deslocamento.
 
 Uso:
-  python tools\\calibrate.py           # guiar pelos 3 pontos
+  python tools\\calibrate.py           # guiar pelos pontos
   python tools\\calibrate.py --status  # ver se há calibração
   python tools\\calibrate.py --clear   # remover calibração (volta ao mapa original)
 
@@ -14,7 +14,9 @@ Nesta máquina (referência): NÃO rode a calibração — sem o arquivo, nada m
 
 from __future__ import annotations
 
+import math
 import sys
+import time
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -30,6 +32,11 @@ from automation import calibration, win_mouse
 
 win_mouse.ensure_dpi_awareness()
 
+# Se o ponto "rodapé" não ficar bem abaixo do campo data, pedimos para refazer.
+MIN_Y_GAP_DATA_RODAPE = 250
+# Aviso se o mapeamento não bater com o clique (pixel)
+WARN_RESIDUAL_PX = 35
+
 
 class CalibrateApp:
     def __init__(self):
@@ -37,6 +44,10 @@ class CalibrateApp:
         self.index = 0
         self.captured = []  # type: List[Tuple[int, int]]
         self._listener = None
+        self._phase = "capture"  # capture | verify
+        self._pending_transform = None
+        self._pending_pairs = None
+        self._pending_payload = None
 
         self.root = tk.Tk()
         self.root.title("Calibração SAP 800")
@@ -68,7 +79,7 @@ class CalibrateApp:
             font=("Segoe UI", 11),
             fg="#ffffff",
             bg="#1a1a2e",
-            wraplength=420,
+            wraplength=460,
             justify="left",
         )
         self.label.pack(anchor="w", pady=(10, 0))
@@ -79,7 +90,7 @@ class CalibrateApp:
             font=("Segoe UI", 9),
             fg="#aaaaaa",
             bg="#1a1a2e",
-            wraplength=420,
+            wraplength=460,
             justify="left",
         )
         self.hint.pack(anchor="w", pady=(6, 0))
@@ -109,7 +120,7 @@ class CalibrateApp:
             fg="#cccccc",
             bg="#1a1a2e",
             justify="left",
-            wraplength=420,
+            wraplength=460,
         )
         self.log.pack(anchor="w", pady=(12, 0))
 
@@ -132,52 +143,85 @@ class CalibrateApp:
             return
         pt = self.points[self.index]
         self.progress.config(
-            text="Ponto {}/{}  (ref original: {}, {})".format(
-                self.index + 1, total, pt["x"], pt["y"]
+            text="Ponto {}/{} — posicione o mouse e aperte F8".format(
+                self.index + 1, total
             )
         )
         self.label.config(text=pt["label"])
         self.hint.config(text=pt.get("hint") or "")
 
+    def _refresh_log(self):
+        lines = []
+        for i, (cx, cy) in enumerate(self.captured):
+            ref = self.points[i]
+            lines.append(
+                "{}. {} → local ({}, {})".format(i + 1, ref["id"], cx, cy)
+            )
+        self.log.config(text="\n".join(lines))
+
     def _on_key(self, key):
         try:
             if key == keyboard.Key.f8:
-                self.root.after(0, self._capture)
+                self.root.after(0, self._on_f8)
             elif key == keyboard.Key.esc:
                 self.root.after(0, self._cancel)
+            else:
+                # R = refazer (fase verify)
+                name = getattr(key, "char", None)
+                if name and name.lower() == "r" and self._phase == "verify":
+                    self.root.after(0, self._restart)
         except Exception:
             pass
+
+    def _on_f8(self):
+        if self._phase == "capture":
+            self._capture()
+        elif self._phase == "verify":
+            self._save_and_exit()
 
     def _capture(self):
         if self.index >= len(self.points):
             return
         x, y = win_mouse.position()
         self.captured.append((x, y))
-        pt = self.points[self.index]
-        lines = []
-        for i, (cx, cy) in enumerate(self.captured):
-            ref = self.points[i]
-            lines.append(
-                "{}: ref({},{}) → local({},{})".format(
-                    ref["id"], ref["x"], ref["y"], cx, cy
-                )
-            )
-        self.log.config(text="\n".join(lines))
-        self.index += 1
+        self._refresh_log()
 
+        # Validação: rodapé precisa ficar bem abaixo da data
+        if self.points[self.index]["id"] == "rodape":
+            data_idx = next(
+                (i for i, p in enumerate(self.points) if p["id"] == "data"), None
+            )
+            if data_idx is not None and data_idx < len(self.captured) - 1:
+                y_data = self.captured[data_idx][1]
+                gap = y - y_data
+                if gap < MIN_Y_GAP_DATA_RODAPE:
+                    self.captured.pop()
+                    messagebox.showwarning(
+                        "Ponto 4 muito alto",
+                        "Esse clique ficou perto demais do campo da data "
+                        "(diferença em Y: {} px; mínimo: {} px).\n\n"
+                        "Desça o mouse até o RODAPÉ da janela do SAP "
+                        "(bem embaixo, ainda dentro do SAP) e tente de novo com F8.".format(
+                            gap, MIN_Y_GAP_DATA_RODAPE
+                        ),
+                    )
+                    self._refresh_log()
+                    return
+
+        self.index += 1
         if self.index >= len(self.points):
-            self._finish()
+            self._prepare_verify()
         else:
             self._show_current()
 
-    def _finish(self):
+    def _prepare_verify(self):
         pairs = []
         for i, local in enumerate(self.captured):
             ref = self.points[i]
             pairs.append(((ref["x"], ref["y"]), local))
 
         transform = calibration.fit_transform(pairs)
-        pairs_payload = [
+        payload = [
             {
                 "id": self.points[i]["id"],
                 "ref": [self.points[i]["x"], self.points[i]["y"]],
@@ -185,32 +229,113 @@ class CalibrateApp:
             }
             for i, local in enumerate(self.captured)
         ]
-        path = calibration.save_transform(transform, pairs=pairs_payload)
 
-        # Preview: primeiro e último ponto mapeados
-        samples = []
-        for ref_xy, local_xy in pairs:
+        residuals = []
+        warn_ids = []
+        for i, (ref_xy, local_xy) in enumerate(pairs):
             mapped = transform.map_xy(ref_xy[0], ref_xy[1])
-            samples.append(
-                "  ref{} → map{} (você clicou {})".format(ref_xy, mapped, local_xy)
+            err = math.hypot(mapped[0] - local_xy[0], mapped[1] - local_xy[1])
+            residuals.append((self.points[i]["id"], mapped, local_xy, err))
+            if err > WARN_RESIDUAL_PX:
+                warn_ids.append(self.points[i]["id"])
+
+        lines = [
+            "Verificação — o mouse vai passar pelos pontos mapeados.",
+            "sx={:.4f} sy={:.4f} ox={:.1f} oy={:.1f}".format(
+                transform.sx, transform.sy, transform.ox, transform.oy
+            ),
+        ]
+        for pid, mapped, local_xy, err in residuals:
+            flag = " ⚠" if err > WARN_RESIDUAL_PX else " ok"
+            lines.append(
+                "{}: map{} vs clique{}  err={:.0f}px{}".format(
+                    pid, mapped, local_xy, err, flag
+                )
+            )
+        self.log.config(text="\n".join(lines))
+
+        if warn_ids:
+            messagebox.showwarning(
+                "Calibração imprecisa",
+                "Os pontos {} ficaram com erro alto (>{} px).\n"
+                "Provavelmente algum clique foi no lugar errado.\n\n"
+                "Vou mover o mouse para você conferir.\n"
+                "Depois: F8 = salvar mesmo assim  |  R = refazer  |  ESC = cancelar".format(
+                    ", ".join(warn_ids), WARN_RESIDUAL_PX
+                ),
+            )
+        else:
+            messagebox.showinfo(
+                "Conferir pontos",
+                "Vou mover o mouse pelos {} pontos mapeados.\n"
+                "Olhe se o cursor cai no lugar certo de cada um.\n\n"
+                "Depois: F8 = salvar  |  R = refazer  |  ESC = cancelar".format(
+                    len(self.points)
+                ),
             )
 
-        msg = (
-            "Calibração salva em:\n{}\n\n"
+        self._pending_transform = transform
+        self._pending_pairs = pairs
+        self._pending_payload = payload
+        self._phase = "verify"
+        self.progress.config(text="Verificação — olhe o cursor na tela")
+        self.label.config(text="Conferindo pontos mapeados…")
+        self.hint.config(
+            text="F8 = salvar calibração    R = refazer do zero    ESC = cancelar"
+        )
+        self.keys_hint.config(
+            text="F8 = salvar    R = refazer    ESC = cancelar"
+        )
+
+        # Move o mouse sem aplicar calibração (move_to é cru)
+        self.root.after(300, self._run_preview)
+
+    def _run_preview(self):
+        if self._pending_transform is None:
+            return
+        transform = self._pending_transform
+        for i, pt in enumerate(self.points):
+            mapped = transform.map_xy(pt["x"], pt["y"])
+            self.label.config(
+                text="Cursor → ponto {} ({}) em {}".format(
+                    i + 1, pt["id"], mapped
+                )
+            )
+            self.root.update_idletasks()
+            win_mouse.move_to(mapped[0], mapped[1])
+            time.sleep(1.1)
+        self.label.config(
+            text="Pronto. F8 para salvar, R para refazer, ESC para cancelar."
+        )
+
+    def _save_and_exit(self):
+        if self._pending_transform is None:
+            return
+        path = calibration.save_transform(
+            self._pending_transform, pairs=self._pending_payload
+        )
+        t = self._pending_transform
+        messagebox.showinfo(
+            "Calibração salva",
+            "Arquivo:\n{}\n\n"
             "sx={:.4f}  sy={:.4f}\n"
             "ox={:.1f}  oy={:.1f}\n\n"
-            "{}\n\n"
-            "Agora rode python main.py nesta máquina."
-        ).format(
-            path,
-            transform.sx,
-            transform.sy,
-            transform.ox,
-            transform.oy,
-            "\n".join(samples),
+            "Agora rode: python main.py".format(
+                path, t.sx, t.sy, t.ox, t.oy
+            ),
         )
-        messagebox.showinfo("Calibração concluída", msg)
         self._stop()
+
+    def _restart(self):
+        self.index = 0
+        self.captured = []
+        self._phase = "capture"
+        self._pending_transform = None
+        self._pending_pairs = None
+        self._pending_payload = None
+        self.keys_hint.config(text="F8 = capturar este ponto    ESC = cancelar")
+        self.log.config(text="")
+        self._show_current()
 
     def _cancel(self):
         self._stop()
@@ -251,13 +376,17 @@ def main():
             print("Não havia calibration.json.")
         return
 
-    print("Assistente de calibração")
-    print("1. Abra o SAP na mesma tela usada na Parte 1 (campos visíveis).")
-    print("2. Posicione o mouse em cada ponto pedido e pressione F8.")
-    print("3. Ao terminar, calibration.json será gerado nesta pasta.")
+    print("Assistente de calibração (4 pontos)")
+    print("1. Barra de comando SAP")
+    print("2. Campo Empresa (1300)")
+    print("3. Campo da DATA (01.02.2025) — NÃO o rodapé")
+    print("4. Rodapé da janela SAP (bem embaixo, ainda dentro do SAP)")
     print("")
-    if calibration.CALIBRATION_FILE.exists():
-        print("Atenção: já existe calibration.json — será sobrescrito.")
+    print("No fim o mouse passa pelos pontos para você conferir.")
+    print("F8 salva | R refaz | ESC cancela")
+    print("")
+    if calibration.clear_calibration():
+        print("Calibração anterior removida — começando do zero.")
     CalibrateApp().run()
 
 
