@@ -37,6 +37,28 @@ Aparece uma **barrinha no topo da tela** com `X` e `Y` em tempo real.
 
 Use isso para ir anotando onde cada clique da sequência deve cair.
 
+## Calibrar em outra máquina
+
+As coordenadas do projeto são da **máquina de referência**. Em outro PC
+(resolução/DPI/monitor diferentes), rode o assistente **uma vez**:
+
+```powershell
+python tools\calibrate.py
+```
+
+1. Abra o SAP na mesma tela da Parte 1 (barra de comando + campos visíveis).  
+2. Clique (posicione o mouse) nos 3 pontos pedidos e pressione **F8** em cada um.  
+3. Isso gera `calibration.json` na raiz do projeto.
+
+A partir daí, `main.py` e as partes usam o mapa automaticamente.
+**Nesta máquina de referência:** não rode a calibração — sem o arquivo, nada muda.
+
+| Comando | Ação |
+|---------|------|
+| `python tools\calibrate.py` | Criar/atualizar calibração |
+| `python tools\calibrate.py --status` | Ver se há calibração |
+| `python tools\calibrate.py --clear` | Remover e voltar ao mapa original |
+
 ## Dependências instaladas
 
 | Pacote | Uso |
