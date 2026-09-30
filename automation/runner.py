@@ -14,7 +14,7 @@ import pyperclip
 from pynput.keyboard import Controller as KeyController
 from pynput.keyboard import Key
 
-from automation import abort, win_mouse
+from automation import abort, docmap, win_mouse
 
 DEFAULT_STEP_PAUSE = 1.0  # entre um passo e o próximo
 CLICK_TYPE_DELAY = 0.2  # entre clique e digitar
@@ -104,6 +104,18 @@ def run_steps(steps, dry_run=False, step_pause=DEFAULT_STEP_PAUSE, click_type_de
             if step.tab_after:
                 print("  (depois: TAB)")
         else:
+            # --documentar: nome/obs só em passos com mouse (wait/press/type seguem)
+            if step.kind in docmap.MOUSE_KINDS:
+                docmap.maybe_ask_step(
+                    kind=step.kind,
+                    label=tag,
+                    x=step.x,
+                    y=step.y,
+                    extra={
+                        "text": step.text,
+                        "keys": list(step.keys) if step.keys else None,
+                    },
+                )
             if step.kind == "click":
                 assert step.x is not None and step.y is not None
                 win_mouse.click(step.x, step.y, clicks=1, wiggle_x=step.wiggle_x)

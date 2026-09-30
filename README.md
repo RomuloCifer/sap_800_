@@ -37,6 +37,37 @@ Aparece uma **barrinha no topo da tela** com `X` e `Y` em tempo real.
 
 Use isso para ir anotando onde cada clique da sequência deve cair.
 
+## Documentar os cliques (`--documentar`)
+
+Para montar o catálogo do que cada clique faz (útil antes de mapear em outra máquina):
+
+```powershell
+python main.py --documentar
+```
+
+O fluxo roda **de verdade**. Antes de cada ação com mouse (clique, duplo clique,
+clicar e digitar, clicar e tecla, ou seleção/cópia na tela), o mouse vai até o
+ponto do clique e abre uma janela **vazia** com:
+
+- **Nome do campo / clique** (obrigatório — você olha onde está o cursor)
+- **Observação** (opcional — ex.: “precisa abrir o dropdown antes”)
+
+`wait`, `press` (só tecla) e `type` (só digitar, sem clique) **não** pedem nome —
+seguem automáticos.
+
+O resultado vai para `mapa_passos.json`, **separado por parte**
+(`parte1`, `apos_parte1`, `parte2`, `parte3`, `parte4`). Cada passo é salvo na hora.
+Se der erro no meio, as partes anteriores continuam no arquivo.
+
+Para refazer só uma parte (sem apagar as outras):
+
+```powershell
+python parts\parte2.py --documentar
+```
+
+As coordenadas `x`/`y` da sua máquina já entram no arquivo só como referência;
+a lógica de mapear XY em outra tela vem depois.
+
 ## Calibrar em outra máquina
 
 As coordenadas do projeto são da **máquina de referência**. Em outro PC

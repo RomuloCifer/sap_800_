@@ -1,0 +1,245 @@
+{
+  "versao": 2,
+  "descricao": "Catálogo de cliques por parte. xy é da máquina de referência; mapeamento por outra tela vem depois.",
+  "partes": {
+    "parte1": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "double_click",
+          "label_codigo": "1 — Duplo clique (abrir/focar)",
+          "nome": "Finance/Treasury",
+          "obs": "",
+          "x": -1150,
+          "y": 530,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 2,
+          "kind": "click_and_type",
+          "label_codigo": "2 — Clique e escrever /n/lkmt/ardfe",
+          "nome": "onde escreve /n...",
+          "obs": "lado direito do check >>",
+          "x": -1827,
+          "y": 58,
+          "text": "/n/lkmt/ardfe",
+          "keys": null
+        },
+        {
+          "ordem": 3,
+          "kind": "click",
+          "label_codigo": "4 — Clique e esperar (executar)",
+          "nome": "botão de check",
+          "obs": "",
+          "x": -1895,
+          "y": 53,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 4,
+          "kind": "click",
+          "label_codigo": "5 — Clique",
+          "nome": "process monitor",
+          "obs": "",
+          "x": -1109,
+          "y": 344,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 5,
+          "kind": "click_and_type",
+          "label_codigo": "6 — Clique e escrever 1300 (FIXO)",
+          "nome": "business",
+          "obs": "",
+          "x": -1616,
+          "y": 267,
+          "text": "1300",
+          "keys": null
+        },
+        {
+          "ordem": 6,
+          "kind": "click_and_type",
+          "label_codigo": "7 — Clique e escrever * (FIXO)",
+          "nome": "branch",
+          "obs": "",
+          "x": -1617,
+          "y": 290,
+          "text": "*",
+          "keys": null
+        },
+        {
+          "ordem": 7,
+          "kind": "click_and_type",
+          "label_codigo": "8 — Clique e escrever BATCH",
+          "nome": "batch",
+          "obs": "",
+          "x": -1617,
+          "y": 309,
+          "text": "1339180",
+          "keys": null
+        },
+        {
+          "ordem": 8,
+          "kind": "click_and_type",
+          "label_codigo": "8b — Clique, Delete x11, escrever 01.02.2025",
+          "nome": "issue date",
+          "obs": "Colocar antes do 01, é importante para o DELETE conseguir deletar todos os digitos da data",
+          "x": -1629,
+          "y": 373,
+          "text": "01.02.2025",
+          "keys": null
+        },
+        {
+          "ordem": 9,
+          "kind": "click",
+          "label_codigo": "8c — Clique",
+          "nome": "receiving",
+          "obs": "na aba Report (no final)",
+          "x": -1506,
+          "y": 766,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 10,
+          "kind": "click",
+          "label_codigo": "8d — Clique",
+          "nome": "view issuer name",
+          "obs": "",
+          "x": -1627,
+          "y": 787,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 11,
+          "kind": "click",
+          "label_codigo": "9 — Clique",
+          "nome": "relogin :P",
+          "obs": "",
+          "x": -1891,
+          "y": 123,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 12,
+          "kind": "click",
+          "label_codigo": "10 — Clique e esperar 2s",
+          "nome": "lapis azul",
+          "obs": "(um pouco pra direita onde era o relogin da tela anterior >>) ( do lado esquerdo do oculos <)",
+          "x": -1869,
+          "y": 123,
+          "text": null,
+          "keys": null
+        }
+      ]
+    },
+    "parte2": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "click_and_type",
+          "label_codigo": "1 — Clique e escrever /oj1b1n",
+          "nome": "campo onde escreve /...",
+          "obs": "",
+          "x": -1834,
+          "y": 50,
+          "text": "/oj1b1n",
+          "keys": null
+        },
+        {
+          "ordem": 2,
+          "kind": "click",
+          "label_codigo": "2 — Clique",
+          "nome": "botao check",
+          "obs": "",
+          "x": -1889,
+          "y": 51,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 3,
+          "kind": "click_and_type",
+          "label_codigo": "3 — Clique e escrever X0",
+          "nome": "nota fiscal type",
+          "obs": "",
+          "x": -1713,
+          "y": 200,
+          "text": "X0",
+          "keys": null
+        },
+        {
+          "ordem": 4,
+          "kind": "click_and_type",
+          "label_codigo": "4 — Clique, Delete x4, escrever 1300",
+          "nome": "company code",
+          "obs": "importante colocar antes do 1300 (bem no inicio do numero)",
+          "x": -1727,
+          "y": 266,
+          "text": "1300",
+          "keys": null
+        },
+        {
+          "ordem": 5,
+          "kind": "click_and_type",
+          "label_codigo": "5 — Clique e escrever 0001",
+          "nome": "business place",
+          "obs": "",
+          "x": -1707,
+          "y": 286,
+          "text": "0001",
+          "keys": null
+        },
+        {
+          "ordem": 6,
+          "kind": "click",
+          "label_codigo": "6a — Clique (espera dropdown)",
+          "nome": "nf partner function",
+          "obs": "",
+          "x": -1692,
+          "y": 329,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 7,
+          "kind": "click",
+          "label_codigo": "6b — Segundo clique (com mexida L/R)",
+          "nome": "opção vendor",
+          "obs": "",
+          "x": -1701,
+          "y": 444,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 8,
+          "kind": "click_and_type",
+          "label_codigo": "7 — Clique e escrever ISSUER SAP",
+          "nome": "partner ID",
+          "obs": "",
+          "x": -1703,
+          "y": 351,
+          "text": "513426",
+          "keys": null
+        },
+        {
+          "ordem": 9,
+          "kind": "click",
+          "label_codigo": "8 — Clique",
+          "nome": "check",
+          "obs": "",
+          "x": -1884,
+          "y": 54,
+          "text": null,
+          "keys": null
+        }
+      ]
+    }
+  }
+}

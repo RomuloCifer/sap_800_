@@ -12,6 +12,7 @@ Uso:
   python main.py              # partes 1 a 4
   python main.py --ate-2      # só partes 1 e 2
   python main.py --dry-run
+  python main.py --documentar # pede nome/obs de cada clique → mapa_passos.json
 
 Emergência: F10 para a automação a qualquer momento.
 """
@@ -28,7 +29,7 @@ if str(ROOT) not in sys.path:
 
 from tkinter import messagebox
 
-from automation import abort, win_mouse
+from automation import abort, docmap, win_mouse
 from automation.capture import drag_copy
 from automation.forms import ask_fields, validate_random_no
 from automation.utils import clean_value
@@ -72,6 +73,7 @@ def _wait(seconds):
 
 def main(dry_run=False, stop_after=None):
     # type: (bool, object) -> None
+    docmap.enable_from_argv()
     abort.start_listener()
     try:
         ok = parte1.main(dry_run=dry_run, show_done=False)
@@ -86,6 +88,7 @@ def main(dry_run=False, stop_after=None):
         if not dry_run:
             _wait(config.WAIT_AFTER_PART1)
 
+        docmap.begin_part("apos_parte1")
         issuer = drag_copy(
             ISSUER_SELECT_FROM[0], ISSUER_SELECT_FROM[1],
             ISSUER_SELECT_TO[0], ISSUER_SELECT_TO[1],
@@ -201,6 +204,7 @@ def main(dry_run=False, stop_after=None):
             )
         print("\nFluxo completo finalizado.")
     finally:
+        docmap.finish()
         abort.stop_listener()
 
 
