@@ -9,15 +9,11 @@ from pynput.keyboard import Controller as KeyController
 from pynput.keyboard import Key
 
 from automation import win_mouse
+from automation.utils import clean_value
 
 _keyboard = KeyController()
 
 MARKER = "__SAP800_BEFORE_COPY__"
-
-
-def _clean(value):
-    # type: (str) -> str
-    return (value or "").replace("\xa0", " ").strip()
 
 
 def _win32_ctrl_c():
@@ -77,7 +73,7 @@ def drag_copy(x1, y1, x2, y2, label="texto", dry_run=False):
     time.sleep(0.25)
     _win32_ctrl_c()
     time.sleep(0.3)
-    value = _clean(pyperclip.paste() or "")
+    value = clean_value(pyperclip.paste() or "")
 
     if not value or value == MARKER:
         # Fallback que já funcionava no ISSUER: arrasta de novo + Ctrl+C via pynput
@@ -87,7 +83,7 @@ def drag_copy(x1, y1, x2, y2, label="texto", dry_run=False):
             _keyboard.press("c")
             _keyboard.release("c")
         time.sleep(0.35)
-        value = _clean(pyperclip.paste() or "")
+        value = clean_value(pyperclip.paste() or "")
 
     if not value or value == MARKER:
         raise RuntimeError(

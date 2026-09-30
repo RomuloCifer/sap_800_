@@ -22,12 +22,11 @@ from automation.capture import drag_copy
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+from automation.utils import build_tax_steps, clean_value
 import config
 
 win_mouse.ensure_dpi_awareness()
 
-WAIT_AFTER_TAX_CODE = 1.2
-CHAR_INTERVAL_TAX = 0.2
 WAIT_AFTER_STEP_14 = 2.0
 
 VALUE_SELECT_FROM = (-1680, 288)
@@ -38,11 +37,6 @@ START_FIELDS = [
     ("proc_date", "PROC DATE (dd.mm.yyyy)"),
     ("proc_time", "PROC TIME (hh:mm:ss)"),
 ]
-
-
-def _clean(value):
-    # type: (str) -> str
-    return value.replace("\xa0", " ").strip()
 
 
 def capture_value_from_screen(dry_run=False):
@@ -57,36 +51,13 @@ def capture_value_from_screen(dry_run=False):
     )
 
 
-def _tax_pair(label, x1, y1, text, x2, y2):
-    # type: (str, int, int, str, int, int) -> list
-    return [
-        Step(
-            "click_and_type",
-            x=x1,
-            y=y1,
-            text=text,
-            type_slowly=True,
-            char_interval=CHAR_INTERVAL_TAX,
-            wait_after=WAIT_AFTER_TAX_CODE,
-            label="{}a — Digitar {} (letra a letra)".format(label, text),
-        ),
-        Step(
-            "click",
-            x=x2,
-            y=y2,
-            wiggle_x=20,
-            label="{}b — Clique na opção {}".format(label, text),
-        ),
-    ]
-
-
 def build_steps_before_value():
     # type: () -> list
     steps = []
-    steps.extend(_tax_pair("1", -1855, 391, "ICOF", -1821, 432))
-    steps.extend(_tax_pair("2", -1855, 414, "ICM0", -1798, 452))
-    steps.extend(_tax_pair("3", -1855, 433, "IPI0", -1789, 474))
-    steps.extend(_tax_pair("4", -1855, 455, "IPIS", -1789, 494))
+    steps.extend(build_tax_steps("1", -1855, 391, "ICOF", -1821, 432))
+    steps.extend(build_tax_steps("2", -1855, 414, "ICM0", -1798, 452))
+    steps.extend(build_tax_steps("3", -1855, 433, "IPI0", -1789, 474))
+    steps.extend(build_tax_steps("4", -1855, 455, "IPIS", -1789, 494))
     steps.append(
         Step(
             "click_and_press",
@@ -229,12 +200,12 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
 
     if prefill:
         start_data = {
-            "protocol_no": _clean(prefill["protocol_no"]),
-            "proc_date": _clean(prefill["proc_date"]),
-            "proc_time": _clean(prefill["proc_time"]),
+            "protocol_no": clean_value(prefill["protocol_no"]),
+            "proc_date": clean_value(prefill["proc_date"]),
+            "proc_time": clean_value(prefill["proc_time"]),
         }
-        random_no = _clean(prefill["random_no"])
-        digit = _clean(prefill["digit"])
+        random_no = clean_value(prefill["random_no"])
+        digit = clean_value(prefill["digit"])
     else:
         start = ask_fields(
             title="Parte 4 — Dados iniciais",
@@ -248,9 +219,9 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
         if start is None:
             print("Cancelado no formulário inicial da Parte 4.")
             return False
-        start_data = {k: _clean(start[k]) for k, _ in START_FIELDS}
-        random_no = _clean(start["random_no"])
-        digit = _clean(start["digit"])
+        start_data = {k: clean_value(start[k]) for k, _ in START_FIELDS}
+        random_no = clean_value(start["random_no"])
+        digit = clean_value(start["digit"])
 
     print("Parte 4 — dados:")
     for key, val in start_data.items():

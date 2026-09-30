@@ -1,11 +1,10 @@
 """
-Tempos de espera da automação.
+Configurações de tempo da automação.
 
-No início do programa (formulário com o Batch), o usuário informa
-"Tempo de espera" em segundos. Esse valor é aplicado em todas as
-esperas longas abaixo via apply_user_wait().
-
-As esperas curtas entre cliques comuns (~1s) ficam no runner.
+Os valores padrão abaixo são usados quando uma parte roda sozinha.
+Quando o usuário informa o tempo de espera no formulário da Parte 1,
+apply_user_wait() reescreve todos os tempos longos de uma vez.
+As esperas curtas entre cliques (~1s) ficam no runner e não são afetadas.
 """
 
 # Valores padrão (usados se a parte rodar sozinha sem o formulário inicial)
@@ -20,10 +19,6 @@ WAIT_AFTER_EXECUTE = 3.0
 WAIT_BETWEEN_DROPDOWN = 1.5  # Parte 2: intervalo entre os 2 cliques do passo 6
 WAIT_AFTER_PART1 = 5.0  # após Parte 1, antes de copiar ISSUER/INVOICE na tela
 WAIT_BETWEEN_PART3_PART4 = 5.0  # antes da Parte 4
-
-# Valor informado no formulário (None = ainda não definido)
-USER_WAIT = None
-
 
 def apply_user_wait(seconds):
     # type: (float) -> float

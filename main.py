@@ -31,6 +31,7 @@ from tkinter import messagebox
 from automation import abort, win_mouse
 from automation.capture import drag_copy
 from automation.forms import ask_fields
+from automation.utils import clean_value
 from parts import parte1, parte2, parte3, parte4
 import config
 
@@ -67,11 +68,6 @@ def _wait(seconds):
         sleep_abortable(seconds)
     except Exception:
         time.sleep(seconds)
-
-
-def _clean(value):
-    # type: (str) -> str
-    return (value or "").replace("\xa0", " ").strip()
 
 
 def main(dry_run=False, stop_after=None):
@@ -123,20 +119,20 @@ def main(dry_run=False, stop_after=None):
                 return
 
             doc_data = {
-                "invoice": _clean(invoice),
-                "issue_date": _clean(issue_date),
-                "material": _clean(form["material"]),
-                "quantidade": _clean(form["quantidade"]),
-                "price": _clean(form["price"]),
-                "description": _clean(form["description"]),
-                "cfop": _clean(form["cfop"]),  # /AA é acrescentado na Parte 3
+                "invoice": clean_value(invoice),
+                "issue_date": clean_value(issue_date),
+                "material": clean_value(form["material"]),
+                "quantidade": clean_value(form["quantidade"]),
+                "price": clean_value(form["price"]),
+                "description": clean_value(form["description"]),
+                "cfop": clean_value(form["cfop"]),  # /AA é acrescentado na Parte 3
             }
             part4_data = {
-                "protocol_no": _clean(form["protocol_no"]),
-                "proc_date": _clean(form["proc_date"]),
-                "proc_time": _clean(form["proc_time"]),
-                "random_no": _clean(form["random_no"]),
-                "digit": _clean(form["digit"]),
+                "protocol_no": clean_value(form["protocol_no"]),
+                "proc_date": clean_value(form["proc_date"]),
+                "proc_time": clean_value(form["proc_time"]),
+                "random_no": clean_value(form["random_no"]),
+                "digit": clean_value(form["digit"]),
             }
             print("\nDados guardados:")
             for k, v in doc_data.items():

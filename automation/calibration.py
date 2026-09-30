@@ -11,58 +11,69 @@ Transformação: x' = sx * x + ox ; y' = sy * y + oy
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
 CALIBRATION_FILE = ROOT / "calibration.json"
 
+
+@dataclass
+class ReferencePoint:
+    id: str
+    label: str
+    x: int
+    y: int
+    hint: str = ""
+
+
 # Pontos âncora na máquina de referência (suas coordenadas atuais).
 # A outra pessoa clica nos MESMOS lugares da UI, na mesma ordem.
+# Os pontos devem ter boa dispersão em X e Y para estabilizar a regressão.
 REFERENCE_POINTS = [
-    {
-        "id": "cmd",
-        "label": "1) Barra de comando (campo branco onde digita /n/...)",
-        "hint": (
+    ReferencePoint(
+        id="cmd",
+        label="1) Barra de comando (campo branco onde digita /n/...)",
+        hint=(
             "Janela do SAP aberta. Clique no meio do campo de comando "
             "(barra superior, onde se digita a transação)."
         ),
-        "x": -1827,
-        "y": 58,
-    },
-    {
-        "id": "empresa",
-        "label": "2) Campo Empresa (onde a automação digita 1300)",
-        "hint": (
+        x=-1827,
+        y=58,
+    ),
+    ReferencePoint(
+        id="empresa",
+        label="2) Campo Empresa (onde a automação digita 1300)",
+        hint=(
             "Entre em /n/lkmt/ardfe e deixe a tela de seleção aberta. "
             "Clique no meio do campo Empresa (primeiro campo numérico da lista)."
         ),
-        "x": -1616,
-        "y": 267,
-    },
-    {
-        "id": "data",
-        "label": "3) Campo da DATA (onde digita 01.02.2025)",
-        "hint": (
+        x=-1616,
+        y=267,
+    ),
+    ReferencePoint(
+        id="data",
+        label="3) Campo da DATA (onde digita 01.02.2025)",
+        hint=(
             "Na MESMA tela de seleção. Clique no meio do campo de data "
             "(abaixo de Empresa / Batch — NÃO clique embaixo da janela)."
         ),
-        "x": -1629,
-        "y": 373,
-    },
-    {
-        "id": "rodape",
-        "label": "4) Bem EMBAIXO da janela do SAP (rodapé da tela de seleção)",
-        "hint": (
+        x=-1629,
+        y=373,
+    ),
+    ReferencePoint(
+        id="rodape",
+        label="4) Bem EMBAIXO da janela do SAP (rodapé da tela de seleção)",
+        hint=(
             "Ainda na mesma tela. Desça o mouse até a parte inferior da "
             "janela do SAP (região de botões/checkboxes de baixo). "
             "NÃO use a barra de tarefas do Windows. "
             "O Y precisa ficar bem mais baixo que o campo da data."
         ),
-        "x": -1506,
-        "y": 766,
-    },
+        x=-1506,
+        y=766,
+    ),
 ]
 
 
@@ -95,9 +106,14 @@ class Transform:
         return int(round(self.sx * float(dx)))
 
 
-_CACHE = None  # type: Optional[Transform]
-_LOADED = False
-_ANNOUNCED = False
+@dataclass
+class _CalibrationState:
+    transform: Optional[Transform] = None
+    loaded: bool = False
+    announced: bool = False
+
+
+_state = _CalibrationState()
 
 
 def _fit_1d(src, dst):
@@ -169,7 +185,11 @@ def load_transform(path=None):
     path = path or CALIBRATION_FILE
     if not path.exists():
         return Transform()
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError):
+        print("Aviso: calibration.json corrompido — usando coordenadas originais.")
+        return Transform()
     return Transform(
         sx=float(data.get("sx", 1.0)),
         sy=float(data.get("sy", 1.0)),
@@ -180,19 +200,16 @@ def load_transform(path=None):
 
 def clear_cache():
     # type: () -> None
-    global _CACHE, _LOADED, _ANNOUNCED
-    _CACHE = None
-    _LOADED = False
-    _ANNOUNCED = False
+    global _state
+    _state = _CalibrationState()
 
 
 def get_transform():
     # type: () -> Transform
-    global _CACHE, _LOADED
-    if not _LOADED:
-        _CACHE = load_transform()
-        _LOADED = True
-    return _CACHE or Transform()
+    if not _state.loaded:
+        _state.transform = load_transform()
+        _state.loaded = True
+    return _state.transform or Transform()
 
 
 def has_calibration():
@@ -213,10 +230,9 @@ def map_dx(dx):
 def announce_if_active():
     # type: () -> None
     """Avisa uma vez no console se a calibração estiver ativa."""
-    global _ANNOUNCED
-    if _ANNOUNCED:
+    if _state.announced:
         return
-    _ANNOUNCED = True
+    _state.announced = True
     t = get_transform()
     if not CALIBRATION_FILE.exists() or t.is_identity():
         return

@@ -32,9 +32,6 @@ from automation import calibration, win_mouse
 
 win_mouse.ensure_dpi_awareness()
 
-# Se o ponto "rodapé" não ficar bem abaixo do campo data, pedimos para refazer.
-MIN_Y_GAP_DATA_RODAPE = 250
-# Aviso se o mapeamento não bater com o clique (pixel)
 WARN_RESIDUAL_PX = 35
 
 
@@ -54,6 +51,9 @@ class CalibrateApp:
         self.root.attributes("-topmost", True)
         self.root.configure(bg="#1a1a2e", padx=20, pady=16)
         self.root.resizable(False, False)
+
+        # Threshold dinâmico: 20% da altura da tela (mínimo 150 px).
+        self._min_y_gap = max(150, int(self.root.winfo_screenheight() * 0.20))
 
         self.title = tk.Label(
             self.root,
@@ -147,15 +147,15 @@ class CalibrateApp:
                 self.index + 1, total
             )
         )
-        self.label.config(text=pt["label"])
-        self.hint.config(text=pt.get("hint") or "")
+        self.label.config(text=pt.label)
+        self.hint.config(text=pt.hint)
 
     def _refresh_log(self):
         lines = []
         for i, (cx, cy) in enumerate(self.captured):
             ref = self.points[i]
             lines.append(
-                "{}. {} → local ({}, {})".format(i + 1, ref["id"], cx, cy)
+                "{}. {} → local ({}, {})".format(i + 1, ref.id, cx, cy)
             )
         self.log.config(text="\n".join(lines))
 
@@ -166,7 +166,6 @@ class CalibrateApp:
             elif key == keyboard.Key.esc:
                 self.root.after(0, self._cancel)
             else:
-                # R = refazer (fase verify)
                 name = getattr(key, "char", None)
                 if name and name.lower() == "r" and self._phase == "verify":
                     self.root.after(0, self._restart)
@@ -186,15 +185,14 @@ class CalibrateApp:
         self.captured.append((x, y))
         self._refresh_log()
 
-        # Validação: rodapé precisa ficar bem abaixo da data
-        if self.points[self.index]["id"] == "rodape":
+        if self.points[self.index].id == "rodape":
             data_idx = next(
-                (i for i, p in enumerate(self.points) if p["id"] == "data"), None
+                (i for i, p in enumerate(self.points) if p.id == "data"), None
             )
             if data_idx is not None and data_idx < len(self.captured) - 1:
                 y_data = self.captured[data_idx][1]
                 gap = y - y_data
-                if gap < MIN_Y_GAP_DATA_RODAPE:
+                if gap < self._min_y_gap:
                     self.captured.pop()
                     messagebox.showwarning(
                         "Ponto 4 muito alto",
@@ -202,7 +200,7 @@ class CalibrateApp:
                         "(diferença em Y: {} px; mínimo: {} px).\n\n"
                         "Desça o mouse até o RODAPÉ da janela do SAP "
                         "(bem embaixo, ainda dentro do SAP) e tente de novo com F8.".format(
-                            gap, MIN_Y_GAP_DATA_RODAPE
+                            gap, self._min_y_gap
                         ),
                     )
                     self._refresh_log()
@@ -218,13 +216,13 @@ class CalibrateApp:
         pairs = []
         for i, local in enumerate(self.captured):
             ref = self.points[i]
-            pairs.append(((ref["x"], ref["y"]), local))
+            pairs.append(((ref.x, ref.y), local))
 
         transform = calibration.fit_transform(pairs)
         payload = [
             {
-                "id": self.points[i]["id"],
-                "ref": [self.points[i]["x"], self.points[i]["y"]],
+                "id": self.points[i].id,
+                "ref": [self.points[i].x, self.points[i].y],
                 "local": [local[0], local[1]],
             }
             for i, local in enumerate(self.captured)
@@ -235,9 +233,9 @@ class CalibrateApp:
         for i, (ref_xy, local_xy) in enumerate(pairs):
             mapped = transform.map_xy(ref_xy[0], ref_xy[1])
             err = math.hypot(mapped[0] - local_xy[0], mapped[1] - local_xy[1])
-            residuals.append((self.points[i]["id"], mapped, local_xy, err))
+            residuals.append((self.points[i].id, mapped, local_xy, err))
             if err > WARN_RESIDUAL_PX:
-                warn_ids.append(self.points[i]["id"])
+                warn_ids.append(self.points[i].id)
 
         lines = [
             "Verificação — o mouse vai passar pelos pontos mapeados.",
@@ -287,19 +285,35 @@ class CalibrateApp:
             text="F8 = salvar    R = refazer    ESC = cancelar"
         )
 
-        # Move o mouse sem aplicar calibração (move_to é cru)
         self.root.after(300, self._run_preview)
+
+    def _in_virtual_screen(self, x, y):
+        # type: (int, int) -> bool
+        """Retorna True se (x, y) está dentro do desktop virtual (com margem)."""
+        vx, vy, vw, vh = win_mouse._virtual_screen_metrics()
+        margin = 200
+        return (
+            vx - margin <= x <= vx + vw + margin
+            and vy - margin <= y <= vy + vh + margin
+        )
 
     def _run_preview(self):
         if self._pending_transform is None:
             return
         transform = self._pending_transform
         for i, pt in enumerate(self.points):
-            mapped = transform.map_xy(pt["x"], pt["y"])
-            self.label.config(
-                text="Cursor → ponto {} ({}) em {}".format(
-                    i + 1, pt["id"], mapped
+            mapped = transform.map_xy(pt.x, pt.y)
+            if not self._in_virtual_screen(mapped[0], mapped[1]):
+                self.label.config(
+                    text="⚠ Ponto {} ({}) mapeado fora da tela {} — calibração pode estar errada!".format(
+                        i + 1, pt.id, mapped
+                    )
                 )
+                self.root.update_idletasks()
+                time.sleep(1.1)
+                continue
+            self.label.config(
+                text="Cursor → ponto {} ({}) em {}".format(i + 1, pt.id, mapped)
             )
             self.root.update_idletasks()
             win_mouse.move_to(mapped[0], mapped[1])

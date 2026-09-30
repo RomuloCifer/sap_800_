@@ -22,12 +22,10 @@ from automation import abort, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+from automation.utils import build_tax_steps, clean_value
 import config
 
 win_mouse.ensure_dpi_awareness()
-
-WAIT_TAX_OPTION = 1.2
-CHAR_INTERVAL_TAX = 0.2
 
 FORM_FIELDS = [
     ("invoice", "Invoice (sem os 000)"),
@@ -42,56 +40,27 @@ FORM_FIELDS = [
 PLANT_FIXO = "1502"
 
 
-def _clean(value):
-    # type: (str) -> str
-    return value.replace("\xa0", " ").strip()
-
-
 def _cfop_with_aa(value):
     # type: (str) -> str
     """Garante sufixo /AA (ex.: 1934 → 1934/AA)."""
-    cfop = _clean(value)
+    cfop = clean_value(value)
     if not cfop.upper().endswith("/AA"):
         cfop = cfop + "/AA"
     return cfop
 
 
-def _tax_row(label, x_type, y_type, code, x_pick, y_pick):
-    # type: (str, int, int, str, int, int) -> list
-    """Digita letra a letra, espera opção, clique com mexida L/R."""
-    return [
-        Step(
-            "click_and_type",
-            x=x_type,
-            y=y_type,
-            text=code,
-            type_slowly=True,
-            char_interval=CHAR_INTERVAL_TAX,
-            wait_after=WAIT_TAX_OPTION,
-            label="{} — Digitar {} (letra a letra)".format(label, code),
-        ),
-        Step(
-            "click",
-            x=x_pick,
-            y=y_pick,
-            wiggle_x=20,
-            label="{} — Clique na opção {}".format(label, code),
-        ),
-    ]
-
-
 def build_steps(data):
     # type: (dict) -> list
-    invoice_raw = _clean(data["invoice"])
+    invoice_raw = clean_value(data["invoice"])
     if invoice_raw.startswith("000"):
         invoice = invoice_raw
     else:
         invoice = "000" + invoice_raw
-    issue_date = _clean(data["issue_date"])
-    material = _clean(data["material"])
-    quantidade = _clean(data["quantidade"])
-    price = _clean(data["price"])
-    description = _clean(data["description"])
+    issue_date = clean_value(data["issue_date"])
+    material = clean_value(data["material"])
+    quantidade = clean_value(data["quantidade"])
+    price = clean_value(data["price"])
+    description = clean_value(data["description"])
     cfop = _cfop_with_aa(data["cfop"])
     plant = PLANT_FIXO
 
@@ -161,10 +130,10 @@ def build_steps(data):
         ),
     ]
 
-    steps.extend(_tax_row("10 ICMS", -1074, 396, "IC9", -1023, 434))
-    steps.extend(_tax_row("11 IPI", -1005, 396, "I49", -977, 434))
-    steps.extend(_tax_row("12 COFINS", -957, 396, "C70", -921, 434))
-    steps.extend(_tax_row("13 PIS", -906, 393, "P70", -879, 434))
+    steps.extend(build_tax_steps("10 ICMS", -1074, 396, "IC9", -1023, 434))
+    steps.extend(build_tax_steps("11 IPI", -1005, 396, "I49", -977, 434))
+    steps.extend(build_tax_steps("12 COFINS", -957, 396, "C70", -921, 434))
+    steps.extend(build_tax_steps("13 PIS", -906, 393, "P70", -879, 434))
 
     steps.extend(
         [
@@ -206,7 +175,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     prefill = dict(prefill) if prefill else {}
 
     if prefill:
-        data = {k: _clean(v) for k, v in prefill.items()}
+        data = {k: clean_value(v) for k, v in prefill.items()}
     else:
         data = ask_fields(
             title="Parte 3 — Dados do documento",
@@ -216,7 +185,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
         if data is None:
             print("Cancelado pelo usuário.")
             return False
-        data = {k: _clean(v) for k, v in data.items()}
+        data = {k: clean_value(v) for k, v in data.items()}
 
     data["plant"] = PLANT_FIXO
 
@@ -224,7 +193,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     for key, _label in FORM_FIELDS:
         shown = data.get(key, "")
         if key == "invoice":
-            inv = _clean(shown)
+            inv = clean_value(shown)
             shown = inv if inv.startswith("000") else "000" + inv
         elif key == "cfop":
             shown = _cfop_with_aa(shown)
