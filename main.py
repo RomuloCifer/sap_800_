@@ -4,8 +4,8 @@ Fluxo completo: Parte 1 → 2 → 3 → 4 (encadeadas).
 Após a Parte 1:
   - espera carregar
   - copia ISSUER SAP, INVOICE e ISSUE_DATE da tela
-  - pede material, quantidade, price, description, cfop,
-    protocol, proc date/time, random no e digit
+  - captura na tela material/quantidade/price/description/cfop
+    e protocol/proc date/time/random/digit (sem formulário manual)
   - guarda tudo para as Partes 2, 3 e 4
 
 Uso:
@@ -33,7 +33,7 @@ from tkinter import messagebox
 
 from automation import abort, docmap, localmap, win_mouse
 from automation.capture import drag_copy
-from automation.forms import ask_fields, validate_random_no
+from automation.part34_capture import capture_part34_fields
 from automation.utils import clean_value
 from parts import parte1, parte2, parte3, parte4
 import config
@@ -48,20 +48,6 @@ INVOICE_SELECT_TO = (-1703, 176)
 
 ISSUE_DATE_SELECT_FROM = (-950, 176)
 ISSUE_DATE_SELECT_TO = (-871, 178)
-
-# Formulário único após Parte 1 (dados das Partes 3 e 4)
-FORM_AFTER_P1 = [
-    ("material", "Material"),
-    ("quantidade", "Quantidade"),
-    ("price", "Price"),
-    ("description", "Description"),
-    ("cfop", "CFOP (sem /AA)"),
-    ("protocol_no", "PROTOCOL NO"),
-    ("proc_date", "PROC DATE (dd.mm.yyyy)"),
-    ("proc_time", "PROC TIME (hh:mm:ss)"),
-    ("random_no", "RANDOM NO (8 dígitos)"),
-    ("digit", "DIGIT"),
-]
 
 
 def _wait(seconds):
@@ -116,32 +102,21 @@ def main(dry_run=False, stop_after=None):
                 dry_run=dry_run,
             )
 
-            form = ask_fields(
-                title="Dados para Partes 3 e 4",
-                fields=FORM_AFTER_P1,
-                start_label="Continuar",
-                validators={"random_no": validate_random_no},
-            )
-            if form is None:
-                print("Cancelado no formulário pós Parte 1.")
-                return
+            docmap.begin_part("dados_parte34")
+            localmap.begin_part("dados_parte34")
+            screen_doc, screen_p4 = capture_part34_fields(dry_run=dry_run)
 
             doc_data = {
                 "invoice": clean_value(invoice),
                 "issue_date": clean_value(issue_date),
-                "material": clean_value(form["material"]),
-                "quantidade": clean_value(form["quantidade"]),
-                "price": clean_value(form["price"]),
-                "description": clean_value(form["description"]),
-                "cfop": clean_value(form["cfop"]),  # /AA é acrescentado na Parte 3
+                "material": screen_doc["material"],
+                "quantidade": screen_doc["quantidade"],
+                "price": screen_doc["price"],
+                "description": screen_doc["description"],
+                "cfop": screen_doc["cfop"],  # /AA é acrescentado na Parte 3
             }
-            part4_data = {
-                "protocol_no": clean_value(form["protocol_no"]),
-                "proc_date": clean_value(form["proc_date"]),
-                "proc_time": clean_value(form["proc_time"]),
-                "random_no": clean_value(form["random_no"]),
-                "digit": clean_value(form["digit"]),
-            }
+            part4_data = dict(screen_p4)
+
             print("\nDados guardados:")
             for k, v in doc_data.items():
                 print("  {}: {!r}".format(k, v))
