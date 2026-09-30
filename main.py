@@ -30,7 +30,7 @@ from tkinter import messagebox
 
 from automation import abort, win_mouse
 from automation.capture import drag_copy
-from automation.forms import ask_fields
+from automation.forms import ask_fields, validate_random_no
 from automation.utils import clean_value
 from parts import parte1, parte2, parte3, parte4
 import config
@@ -56,7 +56,7 @@ FORM_AFTER_P1 = [
     ("protocol_no", "PROTOCOL NO"),
     ("proc_date", "PROC DATE (dd.mm.yyyy)"),
     ("proc_time", "PROC TIME (hh:mm:ss)"),
-    ("random_no", "RANDOM NO"),
+    ("random_no", "RANDOM NO (8 dígitos)"),
     ("digit", "DIGIT"),
 ]
 
@@ -113,6 +113,7 @@ def main(dry_run=False, stop_after=None):
                 title="Dados para Partes 3 e 4",
                 fields=FORM_AFTER_P1,
                 start_label="Continuar",
+                validators={"random_no": validate_random_no},
             )
             if form is None:
                 print("Cancelado no formulário pós Parte 1.")

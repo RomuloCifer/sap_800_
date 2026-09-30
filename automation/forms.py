@@ -2,10 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tkinter as tk
 from tkinter import messagebox
+
+Validator = Callable[[str], Optional[str]]  # retorna mensagem de erro ou None
+
+
+def validate_random_no(value):
+    # type: (str) -> Optional[str]
+    """RANDOM NO: exatamente 8 dígitos numéricos."""
+    cleaned = (value or "").strip()
+    if not cleaned.isdigit():
+        return "RANDOM NO deve conter apenas dígitos (0-9)."
+    if len(cleaned) != 8:
+        return "RANDOM NO deve ter exatamente 8 dígitos (você digitou {}).".format(
+            len(cleaned)
+        )
+    return None
 
 
 def ask_fields(
@@ -13,18 +28,21 @@ def ask_fields(
     fields,
     start_label="Iniciar",
     defaults=None,
+    validators=None,
 ):
-    # type: (str, List[Tuple[str, str]], str, Optional[Dict[str, str]]) -> Optional[Dict[str, str]]
+    # type: (str, List[Tuple[str, str]], str, Optional[Dict[str, str]], Optional[Dict[str, Validator]]) -> Optional[Dict[str, str]]
     """
     Abre um formulário simples.
 
     fields: lista de (chave, rótulo), ex.: [("batch", "Batch number")]
     defaults: valores iniciais opcionais por chave
+    validators: opcional, chave → função(valor) → mensagem de erro ou None
     Retorna dict com os valores, ou None se cancelar.
     """
     result = {}  # type: Dict[str, str]
     cancelled = {"value": True}
     defaults = defaults or {}
+    validators = validators or {}
 
     root = tk.Tk()
     root.title(title)
@@ -69,6 +87,16 @@ def ask_fields(
                 )
                 entries[key].focus_set()
                 return
+            if key in validators:
+                error = validators[key](value)
+                if error:
+                    messagebox.showwarning(
+                        "Valor inválido",
+                        error,
+                        parent=root,
+                    )
+                    entries[key].focus_set()
+                    return
             values[key] = value
         result.clear()
         result.update(values)

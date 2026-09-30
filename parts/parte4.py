@@ -19,7 +19,7 @@ from tkinter import messagebox
 
 from automation import abort, win_mouse
 from automation.capture import drag_copy
-from automation.forms import ask_fields
+from automation.forms import ask_fields, validate_random_no
 from automation.runner import Step, run_steps
 from automation.ui import countdown
 from automation.utils import build_tax_steps, clean_value
@@ -211,10 +211,11 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
             title="Parte 4 — Dados iniciais",
             fields=START_FIELDS
             + [
-                ("random_no", "RANDOM NO"),
+                ("random_no", "RANDOM NO (8 dígitos)"),
                 ("digit", "DIGIT"),
             ],
             start_label="Continuar",
+            validators={"random_no": validate_random_no},
         )
         if start is None:
             print("Cancelado no formulário inicial da Parte 4.")
