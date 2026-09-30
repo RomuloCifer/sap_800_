@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
 
 from tkinter import messagebox
 
-from automation import abort, docmap, win_mouse
+from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
@@ -107,7 +107,9 @@ def main(dry_run=False, chained=False, show_done=True, issuer_sap=None):
     issuer_sap: se informado, não abre formulário (capturado da tela).
     """
     docmap.enable_from_argv()
+    localmap.enable_from_argv()
     docmap.begin_part("parte2")
+    localmap.begin_part("parte2")
     if not chained:
         if not messagebox.askokcancel(
             "Parte 2 — Automação SAP",
@@ -167,6 +169,7 @@ def main(dry_run=False, chained=False, show_done=True, issuer_sap=None):
     finally:
         if show_done or not chained:
             docmap.finish()
+            localmap.finish()
             abort.stop_listener()
 
 

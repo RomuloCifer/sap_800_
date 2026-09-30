@@ -18,7 +18,7 @@ if str(ROOT) not in sys.path:
 
 from tkinter import messagebox
 
-from automation import abort, docmap, win_mouse
+from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
@@ -173,7 +173,9 @@ def build_steps(data):
 def main(dry_run=False, chained=False, show_done=True, prefill=None):
     # type: (bool, bool, bool, object) -> bool
     docmap.enable_from_argv()
+    localmap.enable_from_argv()
     docmap.begin_part("parte3")
+    localmap.begin_part("parte3")
     prefill = dict(prefill) if prefill else {}
 
     if prefill:
@@ -235,6 +237,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     finally:
         if show_done or not chained:
             docmap.finish()
+            localmap.finish()
             abort.stop_listener()
 
 

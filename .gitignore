@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 tools/coordenadas.txt
 calibration.json
+pontos_local.json
 *.egg-info/
 dist/
 build/
