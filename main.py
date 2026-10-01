@@ -3,9 +3,9 @@ Fluxo completo: Parte 1 → 2 → 3 → 4 (encadeadas).
 
 Após a Parte 1:
   - espera carregar
-  - copia ISSUER SAP, INVOICE e ISSUE_DATE da tela
-  - pede material, quantidade, price, description, cfop,
-    protocol, proc date/time, random no e digit
+  - copia ISSUER SAP, INVOICE, série (001/002/…) e ISSUE_DATE da tela
+  - captura na tela material/quantidade/price/description/cfop
+    e protocol/proc date/time/random/digit (sem formulário manual)
   - guarda tudo para as Partes 2, 3 e 4
 
 Uso:
@@ -33,7 +33,7 @@ from tkinter import messagebox
 
 from automation import abort, docmap, localmap, win_mouse
 from automation.capture import drag_copy
-from automation.forms import ask_fields, validate_random_no
+from automation.part34_capture import capture_part34_fields
 from automation.utils import clean_value
 from parts import parte1, parte2, parte3, parte4
 import config
@@ -41,36 +41,22 @@ import config
 win_mouse.ensure_dpi_awareness()
 
 ISSUER_SELECT_FROM = (-949, 222)
-ISSUER_SELECT_TO = (-896, 222)
+ISSUER_SELECT_TO = (-870, 222)
 
 INVOICE_SELECT_FROM = (-1759, 176)
 INVOICE_SELECT_TO = (-1703, 176)
 
+# Série ao lado do invoice (001, 002, 004…)
+INVOICE_SERIES_FROM = (-1694, 179)
+INVOICE_SERIES_TO = (-1669, 179)
+
 ISSUE_DATE_SELECT_FROM = (-950, 176)
 ISSUE_DATE_SELECT_TO = (-871, 178)
-
-# Formulário único após Parte 1 (dados das Partes 3 e 4)
-FORM_AFTER_P1 = [
-    ("material", "Material"),
-    ("quantidade", "Quantidade"),
-    ("price", "Price"),
-    ("description", "Description"),
-    ("cfop", "CFOP (sem /AA)"),
-    ("protocol_no", "PROTOCOL NO"),
-    ("proc_date", "PROC DATE (dd.mm.yyyy)"),
-    ("proc_time", "PROC TIME (hh:mm:ss)"),
-    ("random_no", "RANDOM NO (8 dígitos)"),
-    ("digit", "DIGIT"),
-]
 
 
 def _wait(seconds):
     # type: (float) -> None
-    try:
-        from automation.runner import _sleep as sleep_abortable
-        sleep_abortable(seconds)
-    except Exception:
-        time.sleep(seconds)
+    abort.sleep(seconds)
 
 
 def main(dry_run=False, stop_after=None):
@@ -109,6 +95,12 @@ def main(dry_run=False, stop_after=None):
                 label="INVOICE",
                 dry_run=dry_run,
             )
+            invoice_series = drag_copy(
+                INVOICE_SERIES_FROM[0], INVOICE_SERIES_FROM[1],
+                INVOICE_SERIES_TO[0], INVOICE_SERIES_TO[1],
+                label="INVOICE SERIES",
+                dry_run=dry_run,
+            )
             issue_date = drag_copy(
                 ISSUE_DATE_SELECT_FROM[0], ISSUE_DATE_SELECT_FROM[1],
                 ISSUE_DATE_SELECT_TO[0], ISSUE_DATE_SELECT_TO[1],
@@ -116,32 +108,22 @@ def main(dry_run=False, stop_after=None):
                 dry_run=dry_run,
             )
 
-            form = ask_fields(
-                title="Dados para Partes 3 e 4",
-                fields=FORM_AFTER_P1,
-                start_label="Continuar",
-                validators={"random_no": validate_random_no},
-            )
-            if form is None:
-                print("Cancelado no formulário pós Parte 1.")
-                return
+            docmap.begin_part("dados_parte34")
+            localmap.begin_part("dados_parte34")
+            screen_doc, screen_p4 = capture_part34_fields(dry_run=dry_run)
 
             doc_data = {
                 "invoice": clean_value(invoice),
+                "invoice_series": clean_value(invoice_series),
                 "issue_date": clean_value(issue_date),
-                "material": clean_value(form["material"]),
-                "quantidade": clean_value(form["quantidade"]),
-                "price": clean_value(form["price"]),
-                "description": clean_value(form["description"]),
-                "cfop": clean_value(form["cfop"]),  # /AA é acrescentado na Parte 3
+                "material": screen_doc["material"],
+                "quantidade": screen_doc["quantidade"],
+                "price": screen_doc["price"],
+                "description": screen_doc["description"],
+                "cfop": screen_doc["cfop"],  # /AA é acrescentado na Parte 3
             }
-            part4_data = {
-                "protocol_no": clean_value(form["protocol_no"]),
-                "proc_date": clean_value(form["proc_date"]),
-                "proc_time": clean_value(form["proc_time"]),
-                "random_no": clean_value(form["random_no"]),
-                "digit": clean_value(form["digit"]),
-            }
+            part4_data = dict(screen_p4)
+
             print("\nDados guardados:")
             for k, v in doc_data.items():
                 print("  {}: {!r}".format(k, v))
@@ -207,6 +189,12 @@ def main(dry_run=False, stop_after=None):
                 "Partes 1 a 4 concluídas com sucesso.",
             )
         print("\nFluxo completo finalizado.")
+    except abort.AbortedError:
+        messagebox.showwarning(
+            "Abortado",
+            "Automação interrompida ({}).".format(abort.ABORT_KEY_NAME),
+        )
+        print("Fluxo abortado com {}.".format(abort.ABORT_KEY_NAME))
     finally:
         docmap.finish()
         localmap.finish()

@@ -10,6 +10,45 @@ def clean_value(value):
     return (value or "").replace("\xa0", " ").strip()
 
 
+def pad_invoice(value, width=9):
+    # type: (str, int) -> str
+    """
+    Invoice na Parte 3 precisa ter exatamente `width` dígitos (padrão 9).
+    Se vier com menos, completa com zeros à esquerda.
+
+    Ex.: 130676 → 000130676, 56789 → 000056789.
+    Se já tiver width ou mais dígitos, mantém como está.
+    """
+    digits = "".join(ch for ch in clean_value(value) if ch.isdigit())
+    if not digits:
+        return ""
+    if len(digits) >= width:
+        return digits
+    return digits.zfill(width)
+
+
+def normalize_cfop_prefix(value):
+    # type: (str) -> str
+    """
+    Na tela de origem o CFOP pode vir com 5xxx/6xxx.
+    Na Parte 3 usamos 1xxx/2xxx (sem /AA ainda — o /AA entra na Parte 3).
+    Ex.: 5934 → 1934, 6557 → 2557, 5557 → 1557.
+    """
+    cfop = clean_value(value)
+    if not cfop:
+        return cfop
+    # Remove /AA se vier por acidente
+    if cfop.upper().endswith("/AA"):
+        cfop = cfop[:-3].strip()
+    if not cfop:
+        return cfop
+    if cfop[0] == "5":
+        return "1" + cfop[1:]
+    if cfop[0] == "6":
+        return "2" + cfop[1:]
+    return cfop
+
+
 def build_tax_steps(label, x_type, y_type, code, x_pick, y_pick, wait_after=1.2, char_interval=0.2):
     # type: (str, int, int, str, int, int, float, float) -> list
     """Retorna dois Steps: digitar código letra a letra e clicar na opção."""

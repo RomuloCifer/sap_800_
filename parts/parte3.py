@@ -1,8 +1,8 @@
 """
 Parte 3 da automação SAP.
 
-No fluxo completo (main.py), invoice/issue_date vêm da tela após a Parte 1
-e material/quantidade/price/description/cfop do formulário pós Parte 1.
+No fluxo completo (main.py), invoice/issue_date e material/quantidade/price/
+description/cfop vêm da captura automática na tela após a Parte 1.
 Aqui usa Plant fixo 1502 (ou o formulário completo se rodar sozinha, sem pedir Plant).
 """
 
@@ -22,13 +22,14 @@ from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
-from automation.utils import build_tax_steps, clean_value
+from automation.utils import build_tax_steps, clean_value, pad_invoice
 import config
 
 win_mouse.ensure_dpi_awareness()
 
 FORM_FIELDS = [
-    ("invoice", "Invoice (sem os 000)"),
+    ("invoice", "Invoice (completa até 9 dígitos)"),
+    ("invoice_series", "Série (001 / 002 / …)"),
     ("issue_date", "Issue date (dd.mm.yyyy)"),
     ("material", "Material"),
     ("quantidade", "Quantidade"),
@@ -51,11 +52,8 @@ def _cfop_with_aa(value):
 
 def build_steps(data):
     # type: (dict) -> list
-    invoice_raw = clean_value(data["invoice"])
-    if invoice_raw.startswith("000"):
-        invoice = invoice_raw
-    else:
-        invoice = "000" + invoice_raw
+    invoice = pad_invoice(data["invoice"])
+    invoice_series = clean_value(data.get("invoice_series") or "001")
     issue_date = clean_value(data["issue_date"])
     material = clean_value(data["material"])
     quantidade = clean_value(data["quantidade"])
@@ -70,14 +68,14 @@ def build_steps(data):
             x=-1741,
             y=178,
             text=invoice,
-            label="1 — Clique e escrever 000+INVOICE",
+            label="1 — Clique e escrever INVOICE (9 dígitos)",
         ),
         Step(
             "click_and_type",
             x=-1668,
             y=176,
-            text="001",
-            label="2 — Clique e escrever 001",
+            text=invoice_series,
+            label="2 — Clique e escrever série ({})".format(invoice_series),
         ),
         Step(
             "click_and_type",
@@ -197,8 +195,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     for key, _label in FORM_FIELDS:
         shown = data.get(key, "")
         if key == "invoice":
-            inv = clean_value(shown)
-            shown = inv if inv.startswith("000") else "000" + inv
+            shown = pad_invoice(shown)
         elif key == "cfop":
             shown = _cfop_with_aa(shown)
         print("  {}: {!r}".format(key, shown))

@@ -16,8 +16,8 @@ from pynput.keyboard import Key
 
 from automation import abort, docmap, localmap, win_mouse
 
-DEFAULT_STEP_PAUSE = 1.0  # entre um passo e o próximo
-CLICK_TYPE_DELAY = 0.2  # entre clique e digitar
+DEFAULT_STEP_PAUSE = 1.5  # entre um passo e o próximo
+CLICK_TYPE_DELAY = 0.35  # entre clique e digitar
 
 _keyboard = KeyController()
 

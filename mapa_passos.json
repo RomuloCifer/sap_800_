@@ -268,6 +268,17 @@
         {
           "ordem": 3,
           "kind": "drag_copy",
+          "label_codigo": "INVOICE SERIES",
+          "nome": "serie invoice (001/002/…)",
+          "obs": "ao lado do invoice — 001, 002, 004…",
+          "x": -1694,
+          "y": 179,
+          "x2": -1669,
+          "y2": 179
+        },
+        {
+          "ordem": 4,
+          "kind": "drag_copy",
           "label_codigo": "ISSUE_DATE",
           "nome": "issue date",
           "obs": "bem no inicio dos numeros <<",
@@ -294,9 +305,9 @@
         {
           "ordem": 2,
           "kind": "click_and_type",
-          "label_codigo": "2 — Clique e escrever 001",
+          "label_codigo": "2 — Clique e escrever série",
           "nome": "campo >> do nine digit no",
-          "obs": "(que vai 001)",
+          "obs": "(série copiada da tela: 001/002/004…)",
           "x": -1668,
           "y": 176,
           "text": "001",
