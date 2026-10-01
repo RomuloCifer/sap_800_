@@ -82,7 +82,12 @@ def _press_key(name, times=1, interval=0.05):
 def _sleep(seconds):
     # type: (float) -> None
     """Sleep em fatias para reagir rápido ao F10."""
-    abort.sleep(seconds)
+    remaining = float(seconds)
+    while remaining > 0:
+        abort.check()
+        chunk = min(0.1, remaining)
+        time.sleep(chunk)
+        remaining -= chunk
 
 
 def run_steps(steps, dry_run=False, step_pause=DEFAULT_STEP_PAUSE, click_type_delay=CLICK_TYPE_DELAY):

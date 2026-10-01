@@ -110,10 +110,9 @@ Ordem das partes no fluxo completo:
 
 1. `parte1`  
 2. `apos_parte1` (cópias de Issuer / Invoice / Issue date)  
-3. `dados_parte34` (material, description, cfop, quantidade, price, protocol…)  
-4. `parte2`  
-5. `parte3`  
-6. `parte4`  
+3. `parte2`  
+4. `parte3`  
+5. `parte4`  
 
 ---
 

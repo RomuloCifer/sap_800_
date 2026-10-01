@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from typing import Optional
 
 from pynput import keyboard
@@ -43,17 +42,6 @@ def check():
         raise AbortedError("Automacao abortada com {}.".format(ABORT_KEY_NAME))
 
 
-def sleep(seconds):
-    # type: (float) -> None
-    """Sleep em fatias, reagindo ao F10."""
-    remaining = float(seconds)
-    while remaining > 0:
-        check()
-        chunk = min(0.1, remaining)
-        time.sleep(chunk)
-        remaining -= chunk
-
-
 def _on_press(key):
     try:
         if key == ABORT_KEY:
@@ -62,21 +50,12 @@ def _on_press(key):
         pass
 
 
-def start_listener(fresh=False):
-    # type: (bool) -> None
-    """
-    Garante o listener global do F10.
-
-    fresh=True: zera o flag de abort (início de um fluxo novo).
-    Se o listener já estiver ativo e fresh=False, NÃO zera o flag
-    (evita “apagar” um F10 já pressionado ao entrar numa parte).
-    """
+def start_listener():
+    # type: () -> None
     global _listener
-    if _listener is not None:
-        if fresh:
-            reset()
-        return
     reset()
+    if _listener is not None:
+        return
     _listener = keyboard.Listener(on_press=_on_press)
     _listener.daemon = True
     _listener.start()
