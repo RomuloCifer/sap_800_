@@ -29,6 +29,7 @@ win_mouse.ensure_dpi_awareness()
 
 FORM_FIELDS = [
     ("invoice", "Invoice (sem os 000)"),
+    ("invoice_series", "Série (001 / 002 / …)"),
     ("issue_date", "Issue date (dd.mm.yyyy)"),
     ("material", "Material"),
     ("quantidade", "Quantidade"),
@@ -56,6 +57,7 @@ def build_steps(data):
         invoice = invoice_raw
     else:
         invoice = "000" + invoice_raw
+    invoice_series = clean_value(data.get("invoice_series") or "001")
     issue_date = clean_value(data["issue_date"])
     material = clean_value(data["material"])
     quantidade = clean_value(data["quantidade"])
@@ -76,8 +78,8 @@ def build_steps(data):
             "click_and_type",
             x=-1668,
             y=176,
-            text="001",
-            label="2 — Clique e escrever 001",
+            text=invoice_series,
+            label="2 — Clique e escrever série ({})".format(invoice_series),
         ),
         Step(
             "click_and_type",

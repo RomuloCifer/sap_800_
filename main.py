@@ -3,7 +3,7 @@ Fluxo completo: Parte 1 → 2 → 3 → 4 (encadeadas).
 
 Após a Parte 1:
   - espera carregar
-  - copia ISSUER SAP, INVOICE e ISSUE_DATE da tela
+  - copia ISSUER SAP, INVOICE, série (001/002/…) e ISSUE_DATE da tela
   - captura na tela material/quantidade/price/description/cfop
     e protocol/proc date/time/random/digit (sem formulário manual)
   - guarda tudo para as Partes 2, 3 e 4
@@ -45,6 +45,10 @@ ISSUER_SELECT_TO = (-870, 222)
 
 INVOICE_SELECT_FROM = (-1759, 176)
 INVOICE_SELECT_TO = (-1703, 176)
+
+# Série ao lado do invoice (001, 002, 004…)
+INVOICE_SERIES_FROM = (-1694, 179)
+INVOICE_SERIES_TO = (-1669, 179)
 
 ISSUE_DATE_SELECT_FROM = (-950, 176)
 ISSUE_DATE_SELECT_TO = (-871, 178)
@@ -91,6 +95,12 @@ def main(dry_run=False, stop_after=None):
                 label="INVOICE",
                 dry_run=dry_run,
             )
+            invoice_series = drag_copy(
+                INVOICE_SERIES_FROM[0], INVOICE_SERIES_FROM[1],
+                INVOICE_SERIES_TO[0], INVOICE_SERIES_TO[1],
+                label="INVOICE SERIES",
+                dry_run=dry_run,
+            )
             issue_date = drag_copy(
                 ISSUE_DATE_SELECT_FROM[0], ISSUE_DATE_SELECT_FROM[1],
                 ISSUE_DATE_SELECT_TO[0], ISSUE_DATE_SELECT_TO[1],
@@ -104,6 +114,7 @@ def main(dry_run=False, stop_after=None):
 
             doc_data = {
                 "invoice": clean_value(invoice),
+                "invoice_series": clean_value(invoice_series),
                 "issue_date": clean_value(issue_date),
                 "material": screen_doc["material"],
                 "quantidade": screen_doc["quantidade"],
