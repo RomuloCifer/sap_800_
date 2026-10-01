@@ -32,7 +32,7 @@ def capture_part34_fields(dry_run=False):
 
     # 2 — Material
     material = drag_copy(
-        -1706, 479, -1785, 477, label="MATERIAL", dry_run=dry_run
+        -1651, 479, -1785, 477, label="MATERIAL", dry_run=dry_run
     )
 
     # 3 — Description (Ctrl+A + copiar — texto longo)
