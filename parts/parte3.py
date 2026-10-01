@@ -1,8 +1,8 @@
 """
 Parte 3 da automação SAP.
 
-No fluxo completo (main.py), invoice/issue_date vêm da tela após a Parte 1
-e material/quantidade/price/description/cfop do formulário pós Parte 1.
+No fluxo completo (main.py), invoice/issue_date e material/quantidade/price/
+description/cfop vêm da captura automática na tela após a Parte 1.
 Aqui usa Plant fixo 1502 (ou o formulário completo se rodar sozinha, sem pedir Plant).
 """
 
