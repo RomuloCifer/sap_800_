@@ -47,7 +47,7 @@ def capture_part34_fields(dry_run=False):
 
     # 5 — Quantidade
     quantidade = drag_copy(
-        -940, 480, -846, 480, label="QUANTIDADE", dry_run=dry_run
+        -682, 480, -584, 480, label="QUANTIDADE", dry_run=dry_run
     )
 
     # 6 — Barra de rolagem horizontal (só arrastar)
