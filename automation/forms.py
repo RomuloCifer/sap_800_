@@ -29,20 +29,23 @@ def ask_fields(
     start_label="Iniciar",
     defaults=None,
     validators=None,
+    optional=None,
 ):
-    # type: (str, List[Tuple[str, str]], str, Optional[Dict[str, str]], Optional[Dict[str, Validator]]) -> Optional[Dict[str, str]]
+    # type: (str, List[Tuple[str, str]], str, Optional[Dict[str, str]], Optional[Dict[str, Validator]], Optional[List[str]]) -> Optional[Dict[str, str]]
     """
     Abre um formulário simples.
 
     fields: lista de (chave, rótulo), ex.: [("batch", "Batch number")]
     defaults: valores iniciais opcionais por chave
     validators: opcional, chave → função(valor) → mensagem de erro ou None
+    optional: chaves que podem ficar em branco
     Retorna dict com os valores, ou None se cancelar.
     """
     result = {}  # type: Dict[str, str]
     cancelled = {"value": True}
     defaults = defaults or {}
     validators = validators or {}
+    optional_keys = set(optional or [])
 
     root = tk.Tk()
     root.title(title)
@@ -79,7 +82,7 @@ def ask_fields(
         values = {}
         for key, _label in fields:
             value = entries[key].get().strip()
-            if not value:
+            if not value and key not in optional_keys:
                 messagebox.showwarning(
                     "Campo obrigatório",
                     "Preencha: {}".format(_label),

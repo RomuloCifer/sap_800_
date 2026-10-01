@@ -21,7 +21,7 @@ if str(ROOT) not in sys.path:
 
 from tkinter import messagebox
 
-from automation import abort, win_mouse
+from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
@@ -120,6 +120,10 @@ def build_steps(batch):
 
 def main(dry_run=False, show_done=True):
     # type: (bool, bool) -> bool
+    docmap.enable_from_argv()
+    localmap.enable_from_argv()
+    docmap.begin_part("parte1")
+    localmap.begin_part("parte1")
     data = ask_fields(
         title="Parte 1 — Automação SAP",
         fields=[
@@ -168,6 +172,8 @@ def main(dry_run=False, show_done=True):
         return False
     finally:
         if show_done:
+            docmap.finish()
+            localmap.finish()
             abort.stop_listener()
 
 

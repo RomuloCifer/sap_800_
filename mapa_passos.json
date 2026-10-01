@@ -1,0 +1,802 @@
+{
+  "versao": 2,
+  "descricao": "Catálogo de cliques por parte. xy é da máquina de referência; mapeamento por outra tela vem depois.",
+  "partes": {
+    "parte1": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "double_click",
+          "label_codigo": "1 — Duplo clique (abrir/focar)",
+          "nome": "finance/treas",
+          "obs": "",
+          "x": -1150,
+          "y": 530,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 2,
+          "kind": "click_and_type",
+          "label_codigo": "2 — Clique e escrever /n/lkmt/ardfe",
+          "nome": "onde escreve /n...",
+          "obs": "",
+          "x": -1827,
+          "y": 58,
+          "text": "/n/lkmt/ardfe",
+          "keys": null
+        },
+        {
+          "ordem": 3,
+          "kind": "click",
+          "label_codigo": "4 — Clique e esperar (executar)",
+          "nome": "botao check",
+          "obs": "",
+          "x": -1895,
+          "y": 53,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 4,
+          "kind": "click",
+          "label_codigo": "5 — Clique",
+          "nome": "process monitor",
+          "obs": "",
+          "x": -1109,
+          "y": 344,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 5,
+          "kind": "click_and_type",
+          "label_codigo": "6 — Clique e escrever 1300 (FIXO)",
+          "nome": "business",
+          "obs": "",
+          "x": -1616,
+          "y": 267,
+          "text": "1300",
+          "keys": null
+        },
+        {
+          "ordem": 6,
+          "kind": "click_and_type",
+          "label_codigo": "7 — Clique e escrever * (FIXO)",
+          "nome": "branch",
+          "obs": "",
+          "x": -1617,
+          "y": 290,
+          "text": "*",
+          "keys": null
+        },
+        {
+          "ordem": 7,
+          "kind": "click_and_type",
+          "label_codigo": "8 — Clique e escrever BATCH",
+          "nome": "batch",
+          "obs": "",
+          "x": -1617,
+          "y": 309,
+          "text": "1475316",
+          "keys": null
+        },
+        {
+          "ordem": 8,
+          "kind": "click_and_type",
+          "label_codigo": "8b — Clique, Delete x11, escrever 01.02.2025",
+          "nome": "issue date(bem no inicio <<)",
+          "obs": "",
+          "x": -1629,
+          "y": 373,
+          "text": "01.02.2025",
+          "keys": null
+        },
+        {
+          "ordem": 9,
+          "kind": "click",
+          "label_codigo": "8c — Clique",
+          "nome": "receiving",
+          "obs": "",
+          "x": -1506,
+          "y": 766,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 10,
+          "kind": "click",
+          "label_codigo": "8d — Clique",
+          "nome": "view issuer name",
+          "obs": "",
+          "x": -1627,
+          "y": 787,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 11,
+          "kind": "click",
+          "label_codigo": "9 — Clique",
+          "nome": "relogin :P",
+          "obs": "",
+          "x": -1891,
+          "y": 123,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 12,
+          "kind": "click",
+          "label_codigo": "10 — Clique e esperar 2s",
+          "nome": "lapis azul",
+          "obs": "do lado esquerdo do oculos",
+          "x": -1869,
+          "y": 123,
+          "text": null,
+          "keys": null
+        }
+      ]
+    },
+    "parte2": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "click_and_type",
+          "label_codigo": "1 — Clique e escrever /oj1b1n",
+          "nome": "onde escreve /n...",
+          "obs": "",
+          "x": -1834,
+          "y": 50,
+          "text": "/oj1b1n",
+          "keys": null
+        },
+        {
+          "ordem": 2,
+          "kind": "click",
+          "label_codigo": "2 — Clique",
+          "nome": "check",
+          "obs": "",
+          "x": -1889,
+          "y": 51,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 3,
+          "kind": "click_and_type",
+          "label_codigo": "3 — Clique e escrever X0",
+          "nome": "nota fiscal type",
+          "obs": "",
+          "x": -1713,
+          "y": 200,
+          "text": "X0",
+          "keys": null
+        },
+        {
+          "ordem": 4,
+          "kind": "click_and_type",
+          "label_codigo": "4 — Clique, Delete x4, escrever 1300",
+          "nome": "company code",
+          "obs": "inicio <<",
+          "x": -1727,
+          "y": 266,
+          "text": "1300",
+          "keys": null
+        },
+        {
+          "ordem": 5,
+          "kind": "click_and_type",
+          "label_codigo": "5 — Clique e escrever 0001",
+          "nome": "business place",
+          "obs": "",
+          "x": -1707,
+          "y": 286,
+          "text": "0001",
+          "keys": null
+        },
+        {
+          "ordem": 6,
+          "kind": "click",
+          "label_codigo": "6a — Clique (espera dropdown)",
+          "nome": "NF partner function",
+          "obs": "",
+          "x": -1692,
+          "y": 329,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 7,
+          "kind": "click",
+          "label_codigo": "6b — Segundo clique (com mexida L/R)",
+          "nome": "opção vendor",
+          "obs": "(dentro de NF partner function",
+          "x": -1701,
+          "y": 444,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 8,
+          "kind": "click_and_type",
+          "label_codigo": "7 — Clique e escrever ISSUER SAP",
+          "nome": "partner id",
+          "obs": "",
+          "x": -1703,
+          "y": 351,
+          "text": "513426",
+          "keys": null
+        },
+        {
+          "ordem": 9,
+          "kind": "click",
+          "label_codigo": "8 — Clique",
+          "nome": "botao check",
+          "obs": "",
+          "x": -1884,
+          "y": 54,
+          "text": null,
+          "keys": null
+        }
+      ]
+    },
+    "apos_parte1": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "drag_copy",
+          "label_codigo": "ISSUER SAP",
+          "nome": "Issuer SAP",
+          "obs": "Bem no inicio do numero issuer sap <<",
+          "x": -949,
+          "y": 222,
+          "x2": -896,
+          "y2": 222
+        },
+        {
+          "ordem": 2,
+          "kind": "drag_copy",
+          "label_codigo": "INVOICE",
+          "nome": "invoice<<",
+          "obs": "no inicio dos numeros <<",
+          "x": -1759,
+          "y": 176,
+          "x2": -1703,
+          "y2": 176
+        },
+        {
+          "ordem": 3,
+          "kind": "drag_copy",
+          "label_codigo": "ISSUE_DATE",
+          "nome": "issue date",
+          "obs": "bem no inicio dos numeros <<",
+          "x": -950,
+          "y": 176,
+          "x2": -871,
+          "y2": 178
+        }
+      ]
+    },
+    "parte3": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "click_and_type",
+          "label_codigo": "1 — Clique e escrever 000+INVOICE",
+          "nome": "nine digit no <<",
+          "obs": "",
+          "x": -1741,
+          "y": 178,
+          "text": "000373314",
+          "keys": null
+        },
+        {
+          "ordem": 2,
+          "kind": "click_and_type",
+          "label_codigo": "2 — Clique e escrever 001",
+          "nome": "campo >> do nine digit no",
+          "obs": "(que vai 001)",
+          "x": -1668,
+          "y": 176,
+          "text": "001",
+          "keys": null
+        },
+        {
+          "ordem": 3,
+          "kind": "click_and_type",
+          "label_codigo": "3 — Clique e escrever ISSUE_DATE",
+          "nome": "document date",
+          "obs": "",
+          "x": -1723,
+          "y": 196,
+          "text": "22.02.2026",
+          "keys": null
+        },
+        {
+          "ordem": 4,
+          "kind": "click_and_type",
+          "label_codigo": "4 — Clique e escrever 1",
+          "nome": "NF Item t",
+          "obs": "",
+          "x": -1784,
+          "y": 393,
+          "text": "1",
+          "keys": null
+        },
+        {
+          "ordem": 5,
+          "kind": "click_and_type",
+          "label_codigo": "5 — Clique e escrever Material",
+          "nome": "Material",
+          "obs": "",
+          "x": -1705,
+          "y": 396,
+          "text": "7-705705-7",
+          "keys": null
+        },
+        {
+          "ordem": 6,
+          "kind": "click_and_type",
+          "label_codigo": "6 — Clique e escrever Description",
+          "nome": "Description",
+          "obs": "(Nao coloca no inicio do quadrado <<), colocar mais pro meio/final)",
+          "x": -1584,
+          "y": 396,
+          "text": "TIRA DE LATÃO EM ROLO ESP. SUP. 0,15 MM / .",
+          "keys": null
+        },
+        {
+          "ordem": 7,
+          "kind": "click_and_type",
+          "label_codigo": "7 — Clique e escrever Quantidade",
+          "nome": "quantity",
+          "obs": "mesma coisa, colocar mais pro meio/final",
+          "x": -1390,
+          "y": 396,
+          "text": "1,191.700",
+          "keys": null
+        },
+        {
+          "ordem": 8,
+          "kind": "click_and_type",
+          "label_codigo": "8 — Clique e escrever Price",
+          "nome": "price",
+          "obs": "1,191.700",
+          "x": -1291,
+          "y": 396,
+          "text": "71.69000",
+          "keys": null
+        },
+        {
+          "ordem": 9,
+          "kind": "click_and_type",
+          "label_codigo": "9 — Clique e escrever CFOP",
+          "nome": "CFOP",
+          "obs": "",
+          "x": -1149,
+          "y": 396,
+          "text": "1934/AA",
+          "keys": null
+        },
+        {
+          "ordem": 10,
+          "kind": "click_and_type",
+          "label_codigo": "10 ICMS — Digitar IC9 (letra a letra)",
+          "nome": "ICMS",
+          "obs": "Cuidado para nao colocar no inicio do quadrado <<, isso pode fazer o robô clicar nas opções do quadrado ao lado. Isso serve para todos os proximos cliques)",
+          "x": -1074,
+          "y": 396,
+          "text": "IC9",
+          "keys": null
+        },
+        {
+          "ordem": 11,
+          "kind": "click",
+          "label_codigo": "10 ICMS — Clique na opção IC9",
+          "nome": "IC9",
+          "obs": "Ao digitar IC9, aparece a opção para selecionar, esse clique deve ir nessa opção que aparece \\/",
+          "x": -1023,
+          "y": 434,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 12,
+          "kind": "click_and_type",
+          "label_codigo": "11 IPI — Digitar I49 (letra a letra)",
+          "nome": "IPI Law",
+          "obs": "",
+          "x": -1005,
+          "y": 396,
+          "text": "I49",
+          "keys": null
+        },
+        {
+          "ordem": 13,
+          "kind": "click",
+          "label_codigo": "11 IPI — Clique na opção I49",
+          "nome": "i49",
+          "obs": "ao escrever i49, aparece uma opção, deve ser nela \\/",
+          "x": -977,
+          "y": 434,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 14,
+          "kind": "click_and_type",
+          "label_codigo": "12 COFINS — Digitar C70 (letra a letra)",
+          "nome": "COF",
+          "obs": "",
+          "x": -957,
+          "y": 396,
+          "text": "C70",
+          "keys": null
+        },
+        {
+          "ordem": 15,
+          "kind": "click",
+          "label_codigo": "12 COFINS — Clique na opção C70",
+          "nome": "C70",
+          "obs": "OPÇÃO C70",
+          "x": -921,
+          "y": 434,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 16,
+          "kind": "click_and_type",
+          "label_codigo": "13 PIS — Digitar P70 (letra a letra)",
+          "nome": "PIS",
+          "obs": "",
+          "x": -906,
+          "y": 393,
+          "text": "P70",
+          "keys": null
+        },
+        {
+          "ordem": 17,
+          "kind": "click",
+          "label_codigo": "13 PIS — Clique na opção P70",
+          "nome": "P70",
+          "obs": "OPÇÃO P70",
+          "x": -879,
+          "y": 434,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 18,
+          "kind": "click_and_type",
+          "label_codigo": "14 — Clique e escrever PLANT",
+          "nome": "PLANT",
+          "obs": "",
+          "x": -848,
+          "y": 392,
+          "text": "1502",
+          "keys": null
+        },
+        {
+          "ordem": 19,
+          "kind": "click_and_press",
+          "label_codigo": "15 — Clique e Enter x2",
+          "nome": "NF item Type (no digito 1) primeira celula",
+          "obs": "",
+          "x": -1788,
+          "y": 396,
+          "text": null,
+          "keys": [
+            "enter"
+          ]
+        },
+        {
+          "ordem": 20,
+          "kind": "click",
+          "label_codigo": "16 — Clique",
+          "nome": "botao select <<",
+          "obs": "",
+          "x": -1886,
+          "y": 392,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 21,
+          "kind": "click",
+          "label_codigo": "17 — Clique (fim Parte 3)",
+          "nome": "taxes",
+          "obs": "",
+          "x": -1624,
+          "y": 958,
+          "text": null,
+          "keys": null
+        }
+      ]
+    },
+    "parte4": {
+      "passos": [
+        {
+          "ordem": 1,
+          "kind": "click_and_type",
+          "label_codigo": "1 — Digitar ICOF (letra a letra)",
+          "nome": "tax type 1 celula em branco",
+          "obs": "",
+          "x": -1855,
+          "y": 391,
+          "text": "ICOF",
+          "keys": null
+        },
+        {
+          "ordem": 2,
+          "kind": "click",
+          "label_codigo": "1 — Clique na opção ICOF",
+          "nome": "opção ICOF",
+          "obs": "",
+          "x": -1821,
+          "y": 432,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 3,
+          "kind": "click_and_type",
+          "label_codigo": "2 — Digitar ICM0 (letra a letra)",
+          "nome": "2 celula",
+          "obs": "",
+          "x": -1855,
+          "y": 414,
+          "text": "ICM0",
+          "keys": null
+        },
+        {
+          "ordem": 4,
+          "kind": "click",
+          "label_codigo": "2 — Clique na opção ICM0",
+          "nome": "opção ICM0",
+          "obs": "",
+          "x": -1798,
+          "y": 452,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 5,
+          "kind": "click_and_type",
+          "label_codigo": "3 — Digitar IPI0 (letra a letra)",
+          "nome": "3 celula",
+          "obs": "",
+          "x": -1855,
+          "y": 433,
+          "text": "IPI0",
+          "keys": null
+        },
+        {
+          "ordem": 6,
+          "kind": "click",
+          "label_codigo": "3 — Clique na opção IPI0",
+          "nome": "opção IPI0",
+          "obs": "",
+          "x": -1789,
+          "y": 474,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 7,
+          "kind": "click_and_type",
+          "label_codigo": "4 — Digitar IPIS (letra a letra)",
+          "nome": "4 celula",
+          "obs": "",
+          "x": -1855,
+          "y": 455,
+          "text": "IPIS",
+          "keys": null
+        },
+        {
+          "ordem": 8,
+          "kind": "click",
+          "label_codigo": "4 — Clique na opção IPIS",
+          "nome": "opção ipis",
+          "obs": "",
+          "x": -1789,
+          "y": 494,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 9,
+          "kind": "click_and_press",
+          "label_codigo": "5 — Clique e Enter x5",
+          "nome": "1 celula(ICOF)",
+          "obs": "",
+          "x": -1852,
+          "y": 391,
+          "text": null,
+          "keys": [
+            "enter"
+          ]
+        },
+        {
+          "ordem": 10,
+          "kind": "drag_copy",
+          "label_codigo": "VALUE",
+          "nome": "Value",
+          "obs": "inicio de value <<",
+          "x": -1680,
+          "y": 288,
+          "x2": -1602,
+          "y2": 288
+        },
+        {
+          "ordem": 11,
+          "kind": "click_and_type",
+          "label_codigo": "6 — Clique e escrever VALUE",
+          "nome": "1 celula Other base",
+          "obs": "",
+          "x": -1315,
+          "y": 395,
+          "text": "85,432.97",
+          "keys": null
+        },
+        {
+          "ordem": 12,
+          "kind": "click_and_type",
+          "label_codigo": "7 — Clique e escrever VALUE",
+          "nome": "2 celula other base",
+          "obs": "",
+          "x": -1333,
+          "y": 413,
+          "text": "85,432.97",
+          "keys": null
+        },
+        {
+          "ordem": 13,
+          "kind": "click_and_type",
+          "label_codigo": "8 — Clique e escrever VALUE",
+          "nome": "3 celula",
+          "obs": "",
+          "x": -1333,
+          "y": 437,
+          "text": "85,432.97",
+          "keys": null
+        },
+        {
+          "ordem": 14,
+          "kind": "click_and_type",
+          "label_codigo": "9 — Clique e escrever VALUE",
+          "nome": "4 celula",
+          "obs": "",
+          "x": -1333,
+          "y": 458,
+          "text": "85,432.97",
+          "keys": null
+        },
+        {
+          "ordem": 15,
+          "kind": "click_and_press",
+          "label_codigo": "10 — Clique e Enter",
+          "nome": "1 celula other base(preenchida com valor)",
+          "obs": "",
+          "x": -1321,
+          "y": 393,
+          "text": null,
+          "keys": [
+            "enter"
+          ]
+        },
+        {
+          "ordem": 16,
+          "kind": "click",
+          "label_codigo": "11 — Clique",
+          "nome": "taxes II",
+          "obs": "",
+          "x": -1636,
+          "y": 221,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 17,
+          "kind": "click_and_type",
+          "label_codigo": "12 — Clique e escrever 403",
+          "nome": "CBS and IBS...",
+          "obs": "",
+          "x": -1521,
+          "y": 289,
+          "text": "403",
+          "keys": null
+        },
+        {
+          "ordem": 18,
+          "kind": "click",
+          "label_codigo": "13 — Clique",
+          "nome": "Taxes",
+          "obs": "",
+          "x": -1812,
+          "y": 227,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 19,
+          "kind": "click",
+          "label_codigo": "14 — Clique e esperar 2s",
+          "nome": "Total Values E matematico",
+          "obs": "E verde, debaixo de \"CREATE\"",
+          "x": -1871,
+          "y": 119,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 20,
+          "kind": "click",
+          "label_codigo": "15 — Clique",
+          "nome": "aba NF-e DATA",
+          "obs": "a ultima",
+          "x": -1226,
+          "y": 239,
+          "text": null,
+          "keys": null
+        },
+        {
+          "ordem": 21,
+          "kind": "click_and_type",
+          "label_codigo": "16 — Clique e escrever PROTOCOL NO",
+          "nome": "Protocol No.",
+          "obs": "",
+          "x": -1715,
+          "y": 304,
+          "text": "135260698027462",
+          "keys": null
+        },
+        {
+          "ordem": 22,
+          "kind": "click_and_type",
+          "label_codigo": "17 — Clique e escrever PROC DATE",
+          "nome": "Proc Date",
+          "obs": "",
+          "x": -1721,
+          "y": 330,
+          "text": "23.02.2026",
+          "keys": null
+        },
+        {
+          "ordem": 23,
+          "kind": "click_and_type",
+          "label_codigo": "18 — Clique, Delete x9, escrever PROC TIME",
+          "nome": "Proc Time",
+          "obs": "bem no inicio <<",
+          "x": -1733,
+          "y": 350,
+          "text": "08:43:15",
+          "keys": null
+        },
+        {
+          "ordem": 24,
+          "kind": "click_and_type",
+          "label_codigo": "19 — Clique e escrever RANDOM NO",
+          "nome": "random No",
+          "obs": "",
+          "x": -1446,
+          "y": 522,
+          "text": "04899310",
+          "keys": null
+        },
+        {
+          "ordem": 25,
+          "kind": "click_and_type",
+          "label_codigo": "20 — Clique, Delete x1, escrever DIGIT",
+          "nome": "Check Digit",
+          "obs": "bem no inicio <<",
+          "x": -1470,
+          "y": 545,
+          "text": "2",
+          "keys": null
+        }
+      ]
+    }
+  }
+}

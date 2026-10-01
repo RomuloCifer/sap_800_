@@ -17,7 +17,7 @@ if str(ROOT) not in sys.path:
 
 from tkinter import messagebox
 
-from automation import abort, win_mouse
+from automation import abort, docmap, localmap, win_mouse
 from automation.capture import drag_copy
 from automation.forms import ask_fields, validate_random_no
 from automation.runner import Step, run_steps
@@ -196,6 +196,10 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     prefill: dict com protocol_no, proc_date, proc_time, random_no, digit
              (vindo do formulário após a Parte 1).
     """
+    docmap.enable_from_argv()
+    localmap.enable_from_argv()
+    docmap.begin_part("parte4")
+    localmap.begin_part("parte4")
     prefill = dict(prefill) if prefill else {}
 
     if prefill:
@@ -273,6 +277,8 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
         return False
     finally:
         if show_done or not chained:
+            docmap.finish()
+            localmap.finish()
             abort.stop_listener()
 
 

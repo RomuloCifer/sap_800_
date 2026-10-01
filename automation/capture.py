@@ -8,7 +8,7 @@ import pyperclip
 from pynput.keyboard import Controller as KeyController
 from pynput.keyboard import Key
 
-from automation import win_mouse
+from automation import docmap, localmap, win_mouse
 from automation.utils import clean_value
 
 _keyboard = KeyController()
@@ -66,6 +66,15 @@ def drag_copy(x1, y1, x2, y2, label="texto", dry_run=False):
         return "DRY_RUN_{}".format(label.upper().replace(" ", "_"))
 
     print("Capturando {} na tela ({},{}) -> ({},{})...".format(label, x1, y1, x2, y2))
+    docmap.maybe_ask_step(
+        kind="drag_copy",
+        label=label,
+        x=x1,
+        y=y1,
+        x2=x2,
+        y2=y2,
+    )
+    x1, y1, x2, y2 = localmap.resolve_drag(x1, y1, x2, y2, label)
     pyperclip.copy(MARKER)
     time.sleep(0.1)
 

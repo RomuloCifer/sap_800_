@@ -14,7 +14,7 @@ import pyperclip
 from pynput.keyboard import Controller as KeyController
 from pynput.keyboard import Key
 
-from automation import abort, win_mouse
+from automation import abort, docmap, localmap, win_mouse
 
 DEFAULT_STEP_PAUSE = 1.0  # entre um passo e o próximo
 CLICK_TYPE_DELAY = 0.2  # entre clique e digitar
@@ -104,16 +104,33 @@ def run_steps(steps, dry_run=False, step_pause=DEFAULT_STEP_PAUSE, click_type_de
             if step.tab_after:
                 print("  (depois: TAB)")
         else:
+            # --documentar: nome/obs só em passos com mouse (wait/press/type seguem)
+            if step.kind in docmap.MOUSE_KINDS:
+                docmap.maybe_ask_step(
+                    kind=step.kind,
+                    label=tag,
+                    x=step.x,
+                    y=step.y,
+                    extra={
+                        "text": step.text,
+                        "keys": list(step.keys) if step.keys else None,
+                    },
+                )
+            # --mapear / pontos_local: resolve XY desta máquina
+            x, y = step.x, step.y
+            if step.x is not None and step.y is not None:
+                x, y = localmap.resolve(step.x, step.y, tag, kind=step.kind)
+
             if step.kind == "click":
-                assert step.x is not None and step.y is not None
-                win_mouse.click(step.x, step.y, clicks=1, wiggle_x=step.wiggle_x)
+                assert x is not None and y is not None
+                win_mouse.click(x, y, clicks=1, wiggle_x=step.wiggle_x)
             elif step.kind == "double_click":
-                assert step.x is not None and step.y is not None
-                win_mouse.click(step.x, step.y, clicks=2, wiggle_x=step.wiggle_x)
+                assert x is not None and y is not None
+                win_mouse.click(x, y, clicks=2, wiggle_x=step.wiggle_x)
             elif step.kind == "click_and_type":
-                assert step.x is not None and step.y is not None
+                assert x is not None and y is not None
                 assert step.text is not None
-                win_mouse.click(step.x, step.y, clicks=1, wiggle_x=step.wiggle_x)
+                win_mouse.click(x, y, clicks=1, wiggle_x=step.wiggle_x)
                 _sleep(click_type_delay)
                 if step.delete_times:
                     _press_key("delete", step.delete_times, interval=0.05)
@@ -143,9 +160,9 @@ def run_steps(steps, dry_run=False, step_pause=DEFAULT_STEP_PAUSE, click_type_de
                     times = int(step.seconds)
                 _press_key(step.keys[0], times=times, interval=step.press_interval)
             elif step.kind == "click_and_press":
-                assert step.x is not None and step.y is not None
+                assert x is not None and y is not None
                 assert step.keys
-                win_mouse.click(step.x, step.y, clicks=1, wiggle_x=step.wiggle_x)
+                win_mouse.click(x, y, clicks=1, wiggle_x=step.wiggle_x)
                 _sleep(click_type_delay)
                 times = step.press_times if step.press_times > 0 else 1
                 _press_key(step.keys[0], times=times, interval=step.press_interval)
