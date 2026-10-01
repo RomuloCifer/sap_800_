@@ -113,18 +113,8 @@ def click(x, y, clicks=1, interval=0.08, wiggle_x=0):
 
     wiggle_x > 0: mexe o mouse para a direita/esquerda (mesmo Y) antes do clique,
     útil para “acordar” o foco de listas/dropdowns no SAP.
-
-    Se existir calibration.json, (x,y) são mapeados automaticamente.
-    Sem calibração, as coordenadas originais são usadas (máquina de referência).
     """
     ensure_dpi_awareness()
-    from automation import calibration
-
-    calibration.announce_if_active()
-    x, y = calibration.map_xy(x, y)
-    if wiggle_x:
-        wiggle_x = calibration.map_dx(wiggle_x)
-
     move_to(x, y)
     if wiggle_x:
         px = abs(int(wiggle_x))
@@ -145,15 +135,12 @@ def click(x, y, clicks=1, interval=0.08, wiggle_x=0):
         if i + 1 < clicks:
             time.sleep(interval)
 
+
 def drag_select(x1, y1, x2, y2, steps=12):
     # type: (int, int, int, int, int) -> None
     """Segura o botao esquerdo de (x1,y1) ate (x2,y2) para selecionar texto."""
     ensure_dpi_awareness()
-    from automation import calibration
-
-    calibration.announce_if_active()
-    x1, y1 = calibration.map_xy(x1, y1)
-    x2, y2 = calibration.map_xy(x2, y2)
+    from automation import abort
 
     move_to(x1, y1)
     time.sleep(0.08)
@@ -165,8 +152,6 @@ def drag_select(x1, y1, x2, y2, steps=12):
     )
     time.sleep(0.05)
     for i in range(1, steps + 1):
-        from automation import abort
-
         abort.check()
         t = float(i) / steps
         x = int(round(x1 + (x2 - x1) * t))

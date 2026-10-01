@@ -3,7 +3,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 tools/coordenadas.txt
-calibration.json
 pontos_local.json
 *.egg-info/
 dist/
