@@ -138,9 +138,37 @@ def ask_fields(
     sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry("+{}+{}".format((sw - w) // 2, (sh - h) // 3))
 
+    from automation import abort
+
+    aborted = {"value": False}
+
+    def _abort_now(_event=None):
+        aborted["value"] = True
+        abort.request_abort()
+        try:
+            root.destroy()
+        except Exception:
+            pass
+        return "break"
+
+    def _poll_abort():
+        if abort.is_aborted():
+            _abort_now()
+            return
+        try:
+            root.after(100, _poll_abort)
+        except Exception:
+            pass
+
+    root.bind("<F10>", _abort_now)
     root.protocol("WM_DELETE_WINDOW", _cancel)
+    root.after(100, _poll_abort)
     root.mainloop()
 
+    if aborted["value"] or abort.is_aborted():
+        raise abort.AbortedError(
+            "Automacao abortada com {}.".format(abort.ABORT_KEY_NAME)
+        )
     if cancelled["value"]:
         return None
     return dict(result)

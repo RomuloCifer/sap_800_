@@ -41,7 +41,7 @@ import config
 win_mouse.ensure_dpi_awareness()
 
 ISSUER_SELECT_FROM = (-949, 222)
-ISSUER_SELECT_TO = (-896, 222)
+ISSUER_SELECT_TO = (-870, 222)
 
 INVOICE_SELECT_FROM = (-1759, 176)
 INVOICE_SELECT_TO = (-1703, 176)
@@ -52,11 +52,7 @@ ISSUE_DATE_SELECT_TO = (-871, 178)
 
 def _wait(seconds):
     # type: (float) -> None
-    try:
-        from automation.runner import _sleep as sleep_abortable
-        sleep_abortable(seconds)
-    except Exception:
-        time.sleep(seconds)
+    abort.sleep(seconds)
 
 
 def main(dry_run=False, stop_after=None):
@@ -182,6 +178,12 @@ def main(dry_run=False, stop_after=None):
                 "Partes 1 a 4 concluídas com sucesso.",
             )
         print("\nFluxo completo finalizado.")
+    except abort.AbortedError:
+        messagebox.showwarning(
+            "Abortado",
+            "Automação interrompida ({}).".format(abort.ABORT_KEY_NAME),
+        )
+        print("Fluxo abortado com {}.".format(abort.ABORT_KEY_NAME))
     finally:
         docmap.finish()
         localmap.finish()

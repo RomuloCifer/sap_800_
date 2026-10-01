@@ -165,6 +165,9 @@ def drag_select(x1, y1, x2, y2, steps=12):
     )
     time.sleep(0.05)
     for i in range(1, steps + 1):
+        from automation import abort
+
+        abort.check()
         t = float(i) / steps
         x = int(round(x1 + (x2 - x1) * t))
         y = int(round(y1 + (y2 - y1) * t))

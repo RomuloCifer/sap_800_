@@ -327,11 +327,12 @@ def _ask_position(nome, obs, kind, seq):
     except Exception:
         pass
 
+    abort.check()
     if not confirmed["ok"]:
         raise RuntimeError("Mapeamento cancelado no passo {}.".format(seq))
 
     # Pequena pausa para soltar o F8 antes do clique da automação
-    time.sleep(0.15)
+    abort.sleep(0.15)
     return win_mouse.position()
 
 

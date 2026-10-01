@@ -82,42 +82,53 @@ def _pynput_ctrl(letter):
 def _clipboard_ready(timeout=0.8):
     # type: (float) -> str
     """Lê a área de transferência até sair do MARKER ou esgotar o tempo."""
+    from automation import abort
+
     deadline = time.time() + timeout
     value = ""
     while time.time() < deadline:
+        abort.check()
         value = clean_value(pyperclip.paste() or "")
         if value and value != MARKER:
             return value
-        time.sleep(0.08)
+        abort.sleep(0.08)
     return value if value != MARKER else ""
 
 
 def _reset_clipboard():
     # type: () -> None
+    from automation import abort
+
     pyperclip.copy(MARKER)
-    time.sleep(0.12)
+    abort.sleep(0.12)
 
 
 def click_point(x, y, label="clique", dry_run=False, wait_after=0.0, wiggle_x=0):
     # type: (int, int, str, bool, float, int) -> None
     """Clique simples (passa por --documentar / --mapear)."""
+    from automation import abort
+
     if dry_run:
         print("  [dry-run] clicaria ({},{}) ({})".format(x, y, label))
         return
+    abort.check()
     print("Clique {} em ({},{})...".format(label, x, y))
     docmap.maybe_ask_step(kind="click", label=label, x=x, y=y)
     x, y = localmap.resolve(x, y, label, kind="click")
     win_mouse.click(x, y, clicks=1, wiggle_x=wiggle_x)
     if wait_after > 0:
-        time.sleep(wait_after)
+        abort.sleep(wait_after)
 
 
 def drag_only(x1, y1, x2, y2, label="arrastar", dry_run=False):
     # type: (int, int, int, int, str, bool) -> None
     """Só arrasta (ex.: barra de rolagem) — sem copiar."""
+    from automation import abort
+
     if dry_run:
         print("  [dry-run] arrastaria ({},{}) -> ({},{}) ({})".format(x1, y1, x2, y2, label))
         return
+    abort.check()
     print("Arrastando {} ({},{}) -> ({},{})...".format(label, x1, y1, x2, y2))
     docmap.maybe_ask_step(
         kind="drag_copy",
@@ -129,25 +140,29 @@ def drag_only(x1, y1, x2, y2, label="arrastar", dry_run=False):
     )
     x1, y1, x2, y2 = localmap.resolve_drag(x1, y1, x2, y2, label)
     win_mouse.drag_select(x1, y1, x2, y2)
-    time.sleep(0.25)
+    abort.sleep(0.25)
 
 
 def _copy_via_drag(x1, y1, x2, y2):
     # type: (int, int, int, int) -> str
     """Foco no início → arrasta → Ctrl+C (Win32, depois pynput)."""
+    from automation import abort
+
+    abort.check()
     _reset_clipboard()
     # Clique leve para focar o campo antes de selecionar
     win_mouse.click(x1, y1, clicks=1)
-    time.sleep(0.18)
+    abort.sleep(0.18)
     win_mouse.drag_select(x1, y1, x2, y2)
-    time.sleep(0.35)
+    abort.sleep(0.35)
     _win32_ctrl_c()
     value = _clipboard_ready(0.7)
     if value:
         return value
     # Segunda via: pynput
+    abort.check()
     win_mouse.drag_select(x1, y1, x2, y2)
-    time.sleep(0.3)
+    abort.sleep(0.3)
     _pynput_ctrl("c")
     return _clipboard_ready(0.7)
 
@@ -155,19 +170,23 @@ def _copy_via_drag(x1, y1, x2, y2):
 def _copy_via_select_all(x, y):
     # type: (int, int) -> str
     """Clique no ponto → Ctrl+A → Ctrl+C."""
+    from automation import abort
+
+    abort.check()
     _reset_clipboard()
     win_mouse.click(x, y, clicks=1)
-    time.sleep(0.22)
+    abort.sleep(0.22)
     _win32_ctrl_a()
-    time.sleep(0.18)
+    abort.sleep(0.18)
     _win32_ctrl_c()
     value = _clipboard_ready(0.7)
     if value:
         return value
+    abort.check()
     win_mouse.click(x, y, clicks=1)
-    time.sleep(0.2)
+    abort.sleep(0.2)
     _pynput_ctrl("a")
-    time.sleep(0.12)
+    abort.sleep(0.12)
     _pynput_ctrl("c")
     return _clipboard_ready(0.7)
 
@@ -178,22 +197,26 @@ def click_select_all_copy(x, y, label="texto", dry_run=False):
     Clica no campo, Ctrl+A (seleciona tudo) e Ctrl+C.
     Necessário quando o texto é longo e não cabe na tela.
     """
+    from automation import abort
+
     if dry_run:
         print("  [dry-run] Ctrl+A+C em ({},{}) ({})".format(x, y, label))
         return "DRY_RUN_{}".format(label.upper().replace(" ", "_"))
 
+    abort.check()
     print("Capturando {} com Ctrl+A em ({},{})...".format(label, x, y))
     docmap.maybe_ask_step(kind="click", label=label, x=x, y=y)
     x, y = localmap.resolve(x, y, label, kind="click")
 
     last = ""
     for attempt in range(1, COPY_ATTEMPTS + 1):
+        abort.check()
         last = _copy_via_select_all(x, y)
         if last:
             print("{} capturado: {!r}".format(label, last))
             return last
         print("  (tentativa {}/{} de Ctrl+A falhou, repetindo...)".format(attempt, COPY_ATTEMPTS))
-        time.sleep(0.25 * attempt)
+        abort.sleep(0.25 * attempt)
 
     raise RuntimeError(
         "Não foi possível copiar '{}' da tela (Ctrl+A em {},{}).".format(label, x, y)
@@ -208,10 +231,13 @@ def drag_copy(x1, y1, x2, y2, label="texto", dry_run=False):
     Várias tentativas (foco + arraste + Ctrl+C). Sem Ctrl+A — em vários
     campos do SAP isso selecionaria o documento inteiro.
     """
+    from automation import abort
+
     if dry_run:
         print("  [dry-run] selecionaria ({},{}) -> ({},{}) ({})".format(x1, y1, x2, y2, label))
         return "DRY_RUN_{}".format(label.upper().replace(" ", "_"))
 
+    abort.check()
     print("Capturando {} na tela ({},{}) -> ({},{})...".format(label, x1, y1, x2, y2))
     docmap.maybe_ask_step(
         kind="drag_copy",
@@ -225,6 +251,7 @@ def drag_copy(x1, y1, x2, y2, label="texto", dry_run=False):
 
     last = ""
     for attempt in range(1, COPY_ATTEMPTS + 1):
+        abort.check()
         last = _copy_via_drag(x1, y1, x2, y2)
         if last:
             print("{} capturado: {!r}".format(label, last))
@@ -234,7 +261,7 @@ def drag_copy(x1, y1, x2, y2, label="texto", dry_run=False):
                 attempt, COPY_ATTEMPTS
             )
         )
-        time.sleep(0.3 * attempt)
+        abort.sleep(0.3 * attempt)
 
     raise RuntimeError(
         "Não foi possível copiar '{}' da tela após {} tentativas. "
