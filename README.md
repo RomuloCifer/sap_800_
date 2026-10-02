@@ -92,8 +92,9 @@ Em PC novo (ou depois de mudar monitor / resolução / zoom do Windows), os cliq
 python main.py --mapear
 ```
 
-Em cada passo: leia o nome/obs → mova o mouse (não clique) → **F12**.  
-O bot grava em `pontos_local.json` e executa o clique.
+A automação **roda o fluxo normal**. Só para quando encontra um ponto
+ainda sem coordenada nesta máquina: leia o nome/obs → mova o mouse → **F12**.  
+Pontos já gravados em `pontos_local.json` são reutilizados sem perguntar.
 
 | Tecla | Ação |
 |-------|------|
@@ -103,9 +104,8 @@ O bot grava em `pontos_local.json` e executa o clique.
 
 | Situação | Comando |
 |----------|---------|
-| Primeira vez / refazer tudo | `python main.py --mapear` |
-| Continuar depois de erro / F10 | `python main.py --mapear-resto` |
-| Refazer só uma parte | `python parts\parte2.py --mapear` |
+| Primeira vez / pontos novos / continuar | `python main.py --mapear` |
+| Refazer uma parte do zero | `python parts\parte2.py --mapear-tudo` |
 | Uso no dia a dia (já mapeado) | `python main.py` |
 
 Ordem das partes: `parte1` → `apos_parte1` → `dados_tela` → `parte2` → `parte3` → `parte4`.
@@ -113,8 +113,8 @@ Ordem das partes: `parte1` → `apos_parte1` → `dados_tela` → `parte2` → `
 | Problema | O que fazer |
 |----------|-------------|
 | Errou o último ponto | **F11** (pode várias vezes); corrige o arquivo — não desfaz o clique no SAP |
-| Clique no lugar errado / SAP inconsistente | F10 + `--mapear-resto` (ou refaça a parte); leia a obs |
-| Mudou monitor / resolução / zoom | `--mapear` de novo |
+| Clique no lugar errado / SAP inconsistente | F10 e rode `--mapear` de novo (só pede o que faltar) |
+| Mudou monitor / resolução / zoom | `--mapear-tudo` (ou apague `pontos_local.json` + `--mapear`) |
 | Quer zerar esta máquina | Apague `pontos_local.json` e rode `--mapear` |
 
 Não rode `--documentar` neste PC — isso é só de quem mantém o catálogo.

@@ -1,15 +1,16 @@
 """
 Mapeamento local de cliques (modo --mapear).
 
-Usa mapa_passos.json (nomes/obs documentados) como guia. A outra pessoa
-posiciona o mouse e aperta F12; grava em pontos_local.json.
+Usa mapa_passos.json (nomes/obs documentados) como guia. A automação
+roda normalmente; só pede F12 nos pontos ainda sem coordenada local.
 F11 desfaz o último ponto e permite remapear.
 
-Sem pontos_local.json → coordenadas do código (máquina de referência).
-Com o arquivo → cliques usam o XY local.
+Sem pontos_local.json e sem --mapear → coordenadas do código (referência).
+Com o arquivo (uso normal) → cliques usam o XY local.
 
-  python main.py --mapear         # refaz a parte atual do zero
-  python main.py --mapear-resto   # continua só o que falta na parte
+  python main.py --mapear         # roda o fluxo; pede só o que faltar
+  python main.py --mapear-resto   # alias de --mapear (compatibilidade)
+  python main.py --mapear-tudo    # apaga a parte atual e remapeia do zero
 """
 
 from __future__ import annotations
@@ -58,7 +59,8 @@ def enable_from_argv(argv=None):
     global _enabled, _keep_existing, _part, _part_pontos, _all_parts, _flat, _seq
     global _catalog_passos, _history, _announced
     args = list(argv if argv is not None else sys.argv[1:])
-    if "--mapear" not in args and "--mapear-resto" not in args:
+    map_flags = ("--mapear", "--mapear-resto", "--mapear-tudo")
+    if not any(f in args for f in map_flags):
         # Modo normal: só carrega mapa local se existir (para resolve)
         _enabled = False
         _all_parts = _load()
@@ -76,7 +78,9 @@ def enable_from_argv(argv=None):
         print("Aviso: --documentar e --mapear juntos; usando só --mapear.")
 
     _enabled = True
-    _keep_existing = "--mapear-resto" in args
+    # Padrão: mantém o que já existe e só pede o que faltar.
+    # --mapear-tudo: zera a parte atual e remapeia tudo.
+    _keep_existing = "--mapear-tudo" not in args
     _part = None
     _part_pontos = {}
     _history = []
@@ -84,12 +88,15 @@ def enable_from_argv(argv=None):
     _catalog_passos = []
     _all_parts = _load()
     _rebuild_flat()
-    print("Modo MAPEAR: posicione o mouse e aperte F12 para gravar.")
-    print("  F11 = voltar (desfaz o último ponto)    F10 = parar")
+    print("Modo MAPEAR: a automação roda normalmente.")
+    print("  Só pede marcações nos pontos ainda sem coordenada nesta máquina.")
+    print("  F12 = gravar    F11 = voltar    F10 = parar")
     print("Guia: {}".format(catalog.MAP_FILE.name))
     print("Arquivo local: {}".format(LOCAL_FILE))
     if _keep_existing:
-        print("(--mapear-resto: mantém pontos já gravados nesta parte)")
+        print("(mantém pontos já gravados; use --mapear-tudo para refazer do zero)")
+    else:
+        print("(--mapear-tudo: apaga os pontos da parte atual e remapeia)")
     return True
 
 
