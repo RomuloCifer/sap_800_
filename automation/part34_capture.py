@@ -15,6 +15,7 @@ from automation.capture import (
 )
 from automation.forms import validate_random_no
 from automation.utils import clean_value, normalize_cfop_prefix
+from automation.value_ocr import capture_print_a, new_run_dir
 
 
 def capture_part34_fields(dry_run=False):
@@ -108,6 +109,15 @@ def capture_part34_fields(dry_run=False):
         )
     print("RANDOM NO: {!r}  DIGIT: {!r}".format(random_no, digit))
 
+    # Total Value (print A) — ANTES do clique que fecha a janela
+    run_dir = new_run_dir()
+    print_a = capture_print_a(run_dir=run_dir, dry_run=dry_run)
+    print(
+        "TOTAL VALUE A: {} (método {}, png={!r})".format(
+            print_a["value"], print_a["method"], print_a["path"]
+        )
+    )
+
     # 16 — Clique final + espera 3s
     click_point(
         -1014, 222,
@@ -133,6 +143,8 @@ def capture_part34_fields(dry_run=False):
         "proc_time": clean_value(proc_time),
         "random_no": random_no,
         "digit": digit,
+        "total_value_a": str(print_a["value"]),
+        "total_value_run_dir": str(run_dir),
     }
 
     print("\nDados capturados da tela:")

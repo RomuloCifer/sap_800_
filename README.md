@@ -18,6 +18,28 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+### Tesseract OCR (obrigatório para validação de valor)
+
+A checagem de **Total Value** (prints na tela) usa OCR via `pytesseract`.
+Além do `pip install`, é preciso instalar o **motor Tesseract** no Windows:
+
+```powershell
+winget install UB-Mannheim.TesseractOCR
+```
+
+Depois do install, **feche e abra** o PowerShell (para atualizar o PATH) e confira:
+
+```powershell
+tesseract --version
+```
+
+Se o comando não for encontrado, o bot ainda tenta o caminho padrão
+`C:\Program Files\Tesseract-OCR\tesseract.exe` (instalação via winget).
+Se mesmo assim falhar, adicione essa pasta ao PATH ou reinicie o PC.
+
+Sem o Tesseract, o bot ainda tenta ler o valor via clipboard (fallback),
+mas o OCR é o caminho recomendado.
+
 Se a execução de scripts estiver bloqueada:
 
 ```powershell
@@ -67,6 +89,6 @@ python tools\mouse_coords.py
 |--------|-----|
 | `pyautogui` | Clique, digitação |
 | `pynput` / `keyboard` / `mouse` | Input |
-| `Pillow` / `mss` / `opencv-python` | Tela |
-| `pytesseract` | OCR (opcional; precisa do Tesseract) |
+| `Pillow` / `mss` / `opencv-python` | Tela / screenshots |
+| `pytesseract` | OCR (requer **Tesseract** no sistema — ver setup acima) |
 | `pyperclip` | Área de transferência |
