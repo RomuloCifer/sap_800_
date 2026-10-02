@@ -23,6 +23,11 @@ from automation.forms import ask_fields, validate_random_no
 from automation.runner import Step, run_steps
 from automation.ui import countdown
 from automation.utils import build_tax_steps, clean_value
+from automation.value_ocr import (
+    capture_print_b,
+    compare_total_values,
+    normalize_money,
+)
 import config
 
 win_mouse.ensure_dpi_awareness()
@@ -256,6 +261,34 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
 
         run_steps(build_steps_middle(value, start_data), dry_run=dry_run)
         run_steps(build_steps_random_digit(random_no, digit), dry_run=dry_run)
+
+        # Total Value: print B + comparação A ↔ B ↔ planilha
+        value_a = normalize_money(prefill.get("total_value_a")) if prefill else None
+        value_sheet = normalize_money(prefill.get("total_value_sheet")) if prefill else None
+        run_dir = prefill.get("total_value_run_dir") if prefill else None
+        run_path = Path(run_dir) if run_dir else None
+        print_b = capture_print_b(run_dir=run_path, dry_run=dry_run)
+        print(
+            "TOTAL VALUE B: {} (método {}, png={!r})".format(
+                print_b["value"], print_b["method"], print_b["path"]
+            )
+        )
+        if value_sheet is not None:
+            print("TOTAL VALUE planilha: {}".format(value_sheet))
+        if value_a is not None:
+            cmp = compare_total_values(
+                value_a, print_b["value"], value_sheet=value_sheet
+            )
+            if not cmp["ok"]:
+                raise RuntimeError(
+                    "Total Value não confere: {}".format(cmp["detail"])
+                )
+            print("Total Value (telas" + (" + planilha" if value_sheet is not None else "") + "): OK")
+        else:
+            print(
+                "Aviso: sem total_value_a no prefill — print B capturado, "
+                "comparação adiada."
+            )
 
         print("\nParte 4 concluída.")
         if show_done and not dry_run:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Optional
 
 from pynput import keyboard
@@ -40,6 +41,18 @@ def check():
     # type: () -> None
     if _abort:
         raise AbortedError("Automacao abortada com {}.".format(ABORT_KEY_NAME))
+
+
+def sleep(seconds):
+    # type: (float) -> None
+    """Sleep em fatias para reagir rapido ao F10."""
+    remaining = float(seconds)
+    while remaining > 0:
+        check()
+        chunk = min(0.1, remaining)
+        time.sleep(chunk)
+        remaining -= chunk
+
 
 
 def _on_press(key):

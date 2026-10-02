@@ -1,5 +1,5 @@
 """
-Captura automática na tela dos dados das Partes 3 e 4
+Captura automática na tela dos dados usados nas Partes 3 e 4
 (material, description, cfop, quantidade, price, protocol, etc.).
 
 Substitui o formulário manual após a Parte 1 no fluxo completo.
@@ -15,17 +15,19 @@ from automation.capture import (
 )
 from automation.forms import validate_random_no
 from automation.utils import clean_value, normalize_cfop_prefix
+from automation.value_ocr import capture_print_a, new_run_dir
 
 
-def capture_part34_fields(dry_run=False):
-    # type: (bool) -> tuple
+def capturar_dados_tela(dry_run=False, batch=None):
+    # type: (bool, object) -> tuple
     """
     Executa a sequência de cliques/seleções e devolve (doc_data, part4_data).
 
     doc_data: material, quantidade, price, description, cfop (sem /AA)
     part4_data: protocol_no, proc_date, proc_time, random_no, digit
+    batch: usado só para nomear a pasta runs/YYYYMMDD_<batch>/
     """
-    print("\n--- Capturando dados das Partes 3/4 na tela ---\n")
+    print("\n--- Capturando dados na tela (Partes 3/4) ---\n")
 
     # 1 — Clique
     click_point(-1699, 330, label="dados 3/4 — clique inicial", dry_run=dry_run)
@@ -52,13 +54,13 @@ def capture_part34_fields(dry_run=False):
 
     # 6 — Barra de rolagem horizontal (só arrastar)
     drag_only(
-        -1457, 917, -1127, 917,
+        -1457, 917, -1075, 917,
         label="barra rolagem horizontal",
         dry_run=dry_run,
     )
 
     # 7 — Price
-    price = drag_copy(-612, 480, -521, 480, label="PRICE", dry_run=dry_run)
+    price = drag_copy(-793, 481, -684, 479, label="PRICE", dry_run=dry_run)
 
     # 8–10 — Navegação
     click_point(-1757, 121, label="dados 3/4 — clique 8", dry_run=dry_run)
@@ -108,6 +110,15 @@ def capture_part34_fields(dry_run=False):
         )
     print("RANDOM NO: {!r}  DIGIT: {!r}".format(random_no, digit))
 
+    # Total Value (print A) — ANTES do clique que fecha a janela
+    run_dir = new_run_dir(batch=batch)
+    print_a = capture_print_a(run_dir=run_dir, dry_run=dry_run)
+    print(
+        "TOTAL VALUE A: {} (método {}, png={!r})".format(
+            print_a["value"], print_a["method"], print_a["path"]
+        )
+    )
+
     # 16 — Clique final + espera 3s
     click_point(
         -1014, 222,
@@ -133,6 +144,8 @@ def capture_part34_fields(dry_run=False):
         "proc_time": clean_value(proc_time),
         "random_no": random_no,
         "digit": digit,
+        "total_value_a": str(print_a["value"]),
+        "total_value_run_dir": str(run_dir),
     }
 
     print("\nDados capturados da tela:")

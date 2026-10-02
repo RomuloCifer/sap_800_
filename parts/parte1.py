@@ -25,6 +25,7 @@ from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+from automation.utils import clean_value
 import config
 
 win_mouse.ensure_dpi_awareness()
@@ -118,42 +119,65 @@ def build_steps(batch):
     ]
 
 
-def main(dry_run=False, show_done=True):
-    # type: (bool, bool) -> bool
+def main(dry_run=False, show_done=True, batch=None, chained=False, skip_countdown=False):
+    # type: (bool, bool, object, bool, bool) -> bool
+    """
+    batch: se informado (fluxo da planilha), não pede Batch no formulário.
+    chained: não gerencia abort/docmap finish (quem chama é o main).
+    """
     docmap.enable_from_argv()
     localmap.enable_from_argv()
     docmap.begin_part("parte1")
     localmap.begin_part("parte1")
-    data = ask_fields(
-        title="Parte 1 — Automação SAP",
-        fields=[
-            ("batch", "Batch number"),
-            ("tempo_espera", "Tempo de espera (segundos)"),
-        ],
-        start_label="Iniciar Parte 1",
-        defaults={"tempo_espera": "3"},
-    )
-    if data is None:
-        print("Cancelado pelo usuário.")
-        return False
 
-    batch = data["batch"]
-    try:
-        config.apply_user_wait(config.parse_wait(data["tempo_espera"]))
-    except ValueError:
-        messagebox.showerror(
-            "Tempo inválido",
-            "Informe um número válido para o tempo de espera (ex.: 3 ou 1,5).",
+    if batch is not None:
+        batch = clean_value(str(batch))
+        if not batch:
+            messagebox.showerror("Batch inválido", "Batch vazio na planilha.")
+            return False
+        # Tempo de espera já deve ter sido aplicado pelo orquestrador
+        print("Batch (planilha): {}".format(batch))
+    else:
+        data = ask_fields(
+            title="Parte 1 — Automação SAP",
+            fields=[
+                ("batch", "Batch number"),
+                ("tempo_espera", "Tempo de espera (segundos)"),
+            ],
+            start_label="Iniciar Parte 1",
+            defaults={"tempo_espera": "3"},
         )
-        return False
+        if data is None:
+            print("Cancelado pelo usuário.")
+            return False
 
-    print("Batch informado: {}".format(batch))
+        batch = data["batch"]
+        try:
+            config.apply_user_wait(config.parse_wait(data["tempo_espera"]))
+        except ValueError:
+            messagebox.showerror(
+                "Tempo inválido",
+                "Informe um número válido para o tempo de espera (ex.: 3 ou 1,5).",
+            )
+            return False
+        print("Batch informado: {}".format(batch))
+
     steps = build_steps(batch)
 
-    abort.start_listener()
+    if not chained:
+        abort.start_listener()
     try:
-        if not dry_run:
-            countdown(config.COUNTDOWN_START, "Foque a tela do SAP!\nIniciando em...")
+        if not dry_run and not skip_countdown:
+            if chained:
+                countdown(
+                    config.COUNTDOWN_BETWEEN_PARTS,
+                    "Próximo batch.\nIniciando Parte 1 em...",
+                )
+            else:
+                countdown(
+                    config.COUNTDOWN_START,
+                    "Foque a tela do SAP!\nIniciando em...",
+                )
         run_steps(steps, dry_run=dry_run)
         print("\nParte 1 concluída.")
         if show_done and not dry_run:
@@ -171,7 +195,7 @@ def main(dry_run=False, show_done=True):
         )
         return False
     finally:
-        if show_done:
+        if show_done or not chained:
             docmap.finish()
             localmap.finish()
             abort.stop_listener()
