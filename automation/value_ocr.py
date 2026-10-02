@@ -16,7 +16,7 @@ from typing import Optional, Tuple
 
 from PIL import Image, ImageOps
 
-from automation import localmap, win_mouse
+from automation import docmap, localmap, win_mouse
 from automation.capture import click_point, drag_copy
 from automation.utils import clean_value
 
@@ -261,9 +261,19 @@ def read_money_region(
     Resolve coords locais, tira print, lê valor (OCR → fallback clipboard).
 
     Retorna dict: value (Decimal|None), raw, path, method, label
+
+    Cantos da região (documentar / mapear):
+      label + " SE" = superior-esquerdo
+      label + " ID" = inferior-direito
+    Print A = Total Value cedo no fluxo; Print B = Total Value no fim da Parte 4.
     """
-    ax, ay = localmap.resolve(x1, y1, label + " SE", kind="click")
-    bx, by = localmap.resolve(x2, y2, label + " ID", kind="click")
+    label_se = label + " SE"
+    label_id = label + " ID"
+    # --documentar: pede legenda dos dois cantos da região do print
+    docmap.maybe_ask_step(kind="click", label=label_se, x=x1, y=y1)
+    docmap.maybe_ask_step(kind="click", label=label_id, x=x2, y=y2)
+    ax, ay = localmap.resolve(x1, y1, label_se, kind="click")
+    bx, by = localmap.resolve(x2, y2, label_id, kind="click")
     left, top, right, bottom = _normalize_box(ax, ay, bx, by)
 
     if dry_run:

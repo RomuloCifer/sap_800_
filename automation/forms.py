@@ -7,6 +7,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 import tkinter as tk
 from tkinter import messagebox
 
+from automation.ui import place_window_left_screen
+
 Validator = Callable[[str], Optional[str]]  # retorna mensagem de erro ou None
 
 
@@ -132,11 +134,8 @@ def ask_fields(
     root.bind("<Return>", _submit)
     root.bind("<Escape>", lambda e: _cancel())
 
-    # Centraliza na tela
-    root.update_idletasks()
-    w, h = root.winfo_width(), root.winfo_height()
-    sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.geometry("+{}+{}".format((sw - w) // 2, (sh - h) // 3))
+    # Tela da esquerda (SAP), não o monitor primário da direita
+    place_window_left_screen(root, margin_y=120, anchor="bottom")
 
     root.protocol("WM_DELETE_WINDOW", _cancel)
     root.mainloop()

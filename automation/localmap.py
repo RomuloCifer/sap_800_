@@ -26,6 +26,7 @@ from pynput import keyboard
 
 from automation import abort
 from automation import docmap as catalog
+from automation.ui import place_window_left_screen
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCAL_FILE = ROOT / "pontos_local.json"
@@ -220,6 +221,24 @@ def resolve_drag(x1, y1, x2, y2, label):
     return ax, ay, bx, by
 
 
+def _drag_point_hint(step, is_end):
+    # type: (dict, bool) -> str
+    """
+    Regra: se o X vai para << (mais negativo), 1o=final >> e 2o=inicio <<.
+    Se o X vai para >> (maior), 1o=inicio << e 2o=final >>.
+    """
+    try:
+        x = int(step["x"])
+        x2 = int(step["x2"])
+    except Exception:
+        return "fim da seleção" if is_end else ""
+    if x2 < x:
+        return "inicio do numero <<" if is_end else "final do numero >>"
+    if x2 > x:
+        return "final do numero >>" if is_end else "inicio do numero <<"
+    return "fim da seleção" if is_end else ""
+
+
 def _capture(key, ref_x, ref_y, label, kind):
     # type: (str, int, int, str, str) -> Tuple[int, int]
     global _seq
@@ -230,8 +249,10 @@ def _capture(key, ref_x, ref_y, label, kind):
         info = _find_catalog(label, ref_x, ref_y) or {}
         nome = (info.get("nome") or label or kind).strip()
         obs = (info.get("obs") or "").strip()
-        if info.get("_drag_end"):
-            nome = "{} (fim da seleção)".format(nome)
+        if info.get("kind") == "drag_copy" or kind == "drag_copy":
+            hint = _drag_point_hint(info, is_end=bool(info.get("_drag_end")))
+            if hint:
+                nome = "{} — {}".format(nome, hint)
 
         seq = len(_history) + 1
         print("  [{} #{}] mapeie: {}".format(_part, seq, nome))
@@ -362,10 +383,8 @@ def _ask_position(nome, obs, kind, seq):
         bg="#1a1a2e",
     ).pack(anchor="w", pady=(8, 0))
 
-    root.update_idletasks()
-    w, h = root.winfo_width(), root.winfo_height()
-    sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.geometry("+{}+{}".format(max(0, sw - w - 24), max(0, sh - h - 80)))
+    # Tela da esquerda (SAP), canto inferior — não cobrir o monitor da direita
+    place_window_left_screen(root, margin_x=24, margin_y=80, anchor="bottom")
 
     def _tick():
         try:

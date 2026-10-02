@@ -129,6 +129,12 @@ Documentar nomes/obs dos cliques (atualiza `mapa_passos.json` — **commitar**):
 python main.py --documentar
 ```
 
+Só pergunta o que ainda não tem legenda. Para zerar uma parte:
+
+```powershell
+python parts\parte2.py --documentar-tudo
+```
+
 Capturar coordenadas na tela:
 
 ```powershell

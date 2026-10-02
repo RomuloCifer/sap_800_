@@ -75,7 +75,7 @@ def build_steps(data):
             x=-1668,
             y=176,
             text=invoice_series,
-            label="2 — Clique e escrever série ({})".format(invoice_series),
+            label="2 — Clique e escrever série",
         ),
         Step(
             "click_and_type",
