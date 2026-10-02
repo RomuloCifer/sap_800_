@@ -22,7 +22,7 @@ from automation.capture import drag_copy
 from automation.forms import ask_fields, validate_random_no
 from automation.runner import Step, run_steps
 from automation.ui import countdown
-from automation.utils import build_tax_steps, clean_value
+from automation.utils import clean_value
 from automation.value_ocr import (
     capture_print_b,
     compare_total_values,
@@ -56,56 +56,126 @@ def capture_value_from_screen(dry_run=False):
     )
 
 
-def build_steps_before_value():
-    # type: () -> list
-    steps = []
-    steps.extend(build_tax_steps("1", -1855, 391, "ICOF", -1821, 432))
-    steps.extend(build_tax_steps("2", -1855, 414, "ICM0", -1798, 452))
-    steps.extend(build_tax_steps("3", -1855, 433, "IPI0", -1789, 474))
-    steps.extend(build_tax_steps("4", -1855, 455, "IPIS", -1789, 494))
+# Células de imposto (clique + colar código + Enter x2)
+_TAX_CELLS_LEGACY = (
+    ("1", -1855, 391, "ICOF"),
+    ("2", -1855, 414, "ICM0"),
+    ("3", -1855, 433, "IPI0"),
+    ("4", -1855, 455, "IPIS"),
+)
+_TAX_CELLS_2026_EXTRA = (
+    ("5", -1864, 480, "CBS1"),
+    ("6", -1863, 498, "IB2S"),
+)
+
+# Pastas de VALUE (Other base) — coordenadas por regra de Issue Date
+_VALUE_PASTE_LEGACY = (
+    (-1315, 395),
+    (-1333, 413),
+    (-1333, 437),
+    (-1333, 458),
+)
+_VALUE_PASTE_2026 = (
+    (-1312, 412),
+    (-1312, 455),
+    (-1312, 477),
+    (-1312, 498),
+)
+
+
+def _tax_click_type_enter(label, x, y, code, click_before_enter=None):
+    # type: (str, int, int, str, object) -> list
+    """
+    Clique na célula, cola o código (Ctrl+V) e Enter x2.
+    click_before_enter: (x, y) opcional — clique entre digitar e o Enter x2.
+    """
+    steps = [
+        Step(
+            "click_and_type",
+            x=x,
+            y=y,
+            text=code,
+            label="{} — Clique e escrever {}".format(label, code),
+        ),
+    ]
+    if click_before_enter is not None:
+        cx, cy = click_before_enter
+        steps.append(
+            Step(
+                "click",
+                x=cx,
+                y=cy,
+                label="{} — Clique antes do Enter ({})".format(label, code),
+            )
+        )
     steps.append(
         Step(
-            "click_and_press",
-            x=-1852,
-            y=391,
+            "press",
             keys=["enter"],
-            press_times=5,
+            press_times=2,
             press_interval=0.3,
-            label="5 — Clique e Enter x5",
+            label="{} — Enter x2 ({})".format(label, code),
         )
     )
     return steps
 
 
-def build_steps_middle(value, start_data):
-    # type: (str, dict) -> list
-    """Passos 6–18 (até PROC TIME)."""
-    return [
+def build_steps_before_value(taxes_2026_plus=False):
+    # type: (bool) -> list
+    """
+    Impostos iniciais: clique + código + Enter x2 em cada taxa.
+    Antes de 2026: ICOF/ICM0/IPI0/IPIS (4).
+    2026+: + CBS1 e IB2S; clique extra após digitar cada um, antes do Enter.
+    """
+    steps = []
+    for label, x, y, code in _TAX_CELLS_LEGACY:
+        steps.extend(_tax_click_type_enter(label, x, y, code))
+    if taxes_2026_plus:
+        # CBS1: digitar → clique → Enter x2
+        # IB2S: digitar → clique → Enter x2
+        for label, x, y, code in _TAX_CELLS_2026_EXTRA:
+            if code == "CBS1":
+                before = (-1152, 478)
+            elif code == "IB2S":
+                before = (-1152, 501)
+            else:
+                before = None
+            steps.extend(
+                _tax_click_type_enter(label, x, y, code, click_before_enter=before)
+            )
+    return steps
+
+
+def build_steps_middle(value, start_data, taxes_2026_plus=False):
+    # type: (str, dict, bool) -> list
+    """Passos de colar VALUE + restante até PROC TIME."""
+    paste_pts = _VALUE_PASTE_2026 if taxes_2026_plus else _VALUE_PASTE_LEGACY
+    steps = [
         Step(
             "click_and_type",
-            x=-1315,
-            y=395,
+            x=paste_pts[0][0],
+            y=paste_pts[0][1],
             text=value,
             label="6 — Clique e escrever VALUE",
         ),
         Step(
             "click_and_type",
-            x=-1333,
-            y=413,
+            x=paste_pts[1][0],
+            y=paste_pts[1][1],
             text=value,
             label="7 — Clique e escrever VALUE",
         ),
         Step(
             "click_and_type",
-            x=-1333,
-            y=437,
+            x=paste_pts[2][0],
+            y=paste_pts[2][1],
             text=value,
             label="8 — Clique e escrever VALUE",
         ),
         Step(
             "click_and_type",
-            x=-1333,
-            y=458,
+            x=paste_pts[3][0],
+            y=paste_pts[3][1],
             text=value,
             label="9 — Clique e escrever VALUE",
         ),
@@ -117,61 +187,66 @@ def build_steps_middle(value, start_data):
             press_times=1,
             label="10 — Clique e Enter",
         ),
-        Step(
-            "click",
-            x=-1636,
-            y=221,
-            label="11 — Clique",
-        ),
-        Step(
-            "click_and_type",
-            x=-1521,
-            y=289,
-            text="403",
-            label="12 — Clique e escrever 403",
-        ),
-        Step(
-            "click",
-            x=-1812,
-            y=227,
-            label="13 — Clique",
-        ),
-        Step(
-            "click",
-            x=-1871,
-            y=119,
-            wait_after=WAIT_AFTER_STEP_14,
-            label="14 — Clique e esperar 2s",
-        ),
-        Step(
-            "click",
-            x=-1226,
-            y=239,
-            label="15 — Clique",
-        ),
-        Step(
-            "click_and_type",
-            x=-1715,
-            y=304,
-            text=start_data["protocol_no"],
-            label="16 — Clique e escrever PROTOCOL NO",
-        ),
-        Step(
-            "click_and_type",
-            x=-1721,
-            y=330,
-            text=start_data["proc_date"],
-            label="17 — Clique e escrever PROC DATE",
-        ),
-        Step(
-            "click_and_type",
-            x=-1733,
-            y=350,
-            text=start_data["proc_time"],
-            delete_times=9,
-            label="18 — Clique, Delete x9, escrever PROC TIME",
-        ),
     ]
+    steps.extend(
+        [
+            Step(
+                "click",
+                x=-1636,
+                y=221,
+                label="11 — Clique",
+            ),
+            Step(
+                "click_and_type",
+                x=-1521,
+                y=289,
+                text="403",
+                label="12 — Clique e escrever 403",
+            ),
+            Step(
+                "click",
+                x=-1812,
+                y=227,
+                label="13 — Clique",
+            ),
+            Step(
+                "click",
+                x=-1871,
+                y=119,
+                wait_after=WAIT_AFTER_STEP_14,
+                label="14 — Clique e esperar 2s",
+            ),
+            Step(
+                "click",
+                x=-1226,
+                y=239,
+                label="15 — Clique",
+            ),
+            Step(
+                "click_and_type",
+                x=-1715,
+                y=304,
+                text=start_data["protocol_no"],
+                label="16 — Clique e escrever PROTOCOL NO",
+            ),
+            Step(
+                "click_and_type",
+                x=-1721,
+                y=330,
+                text=start_data["proc_date"],
+                label="17 — Clique e escrever PROC DATE",
+            ),
+            Step(
+                "click_and_type",
+                x=-1733,
+                y=350,
+                text=start_data["proc_time"],
+                delete_times=9,
+                label="18 — Clique, Delete x9, escrever PROC TIME",
+            ),
+        ]
+    )
+    return steps
 
 
 def build_steps_random_digit(random_no, digit):
@@ -233,11 +308,19 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
         random_no = clean_value(start["random_no"])
         digit = clean_value(start["digit"])
 
+    taxes_2026_plus = bool(prefill.get("taxes_2026_plus"))
+
     print("Parte 4 — dados:")
     for key, val in start_data.items():
         print("  {}: {!r}".format(key, val))
     print("  random_no: {!r}".format(random_no))
     print("  digit: {!r}".format(digit))
+    print(
+        "  taxes_2026_plus: {} ({})".format(
+            taxes_2026_plus,
+            "CBS1+IB2S (Enter x2/taxa)" if taxes_2026_plus else "4 impostos (Enter x2/taxa)",
+        )
+    )
 
     if not chained:
         abort.start_listener()
@@ -255,11 +338,19 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
                     "Foque a tela do SAP!\nIniciando Parte 4 em...",
                 )
 
-        run_steps(build_steps_before_value(), dry_run=dry_run)
+        run_steps(
+            build_steps_before_value(taxes_2026_plus=taxes_2026_plus),
+            dry_run=dry_run,
+        )
 
         value = capture_value_from_screen(dry_run=dry_run)
 
-        run_steps(build_steps_middle(value, start_data), dry_run=dry_run)
+        run_steps(
+            build_steps_middle(
+                value, start_data, taxes_2026_plus=taxes_2026_plus
+            ),
+            dry_run=dry_run,
+        )
         run_steps(build_steps_random_digit(random_no, digit), dry_run=dry_run)
 
         # Total Value: print B + comparação A ↔ B ↔ planilha

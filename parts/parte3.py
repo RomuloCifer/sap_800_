@@ -22,7 +22,7 @@ from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
-from automation.utils import build_tax_steps, clean_value, pad_invoice
+from automation.utils import clean_value, pad_invoice
 import config
 
 win_mouse.ensure_dpi_awareness()
@@ -128,16 +128,50 @@ def build_steps(data):
         ),
     ]
 
-    steps.extend(build_tax_steps("10 ICMS", -1074, 396, "IC9", -1023, 434))
-    steps.extend(build_tax_steps("11 IPI", -1005, 396, "I49", -977, 434))
-    steps.extend(build_tax_steps("12 COFINS", -957, 396, "C70", -921, 434))
-    steps.extend(build_tax_steps("13 PIS", -906, 393, "P70", -879, 434))
-
+    # ICMS → IPI → COFINS → PIS: um clique no ICMS, depois Tab entre os campos
+    # (sem clicar nas opções do dropdown). Plant ainda exige clique.
     steps.extend(
         [
             Step(
                 "click_and_type",
-                x=-848,
+                x=-1074,
+                y=396,
+                text="IC9",
+                type_slowly=True,
+                char_interval=0.2,
+                tab_after=True,
+                wait_after=0.4,
+                label="10 ICMS — Digitar IC9 + Tab",
+            ),
+            Step(
+                "type",
+                text="I49",
+                type_slowly=True,
+                char_interval=0.2,
+                tab_after=True,
+                wait_after=0.4,
+                label="11 IPI — Digitar I49 + Tab",
+            ),
+            Step(
+                "type",
+                text="C70",
+                type_slowly=True,
+                char_interval=0.2,
+                tab_after=True,
+                wait_after=0.4,
+                label="12 COFINS — Digitar C70 + Tab",
+            ),
+            Step(
+                "type",
+                text="P70",
+                type_slowly=True,
+                char_interval=0.2,
+                wait_after=0.4,
+                label="13 PIS — Digitar P70",
+            ),
+            Step(
+                "click_and_type",
+                x=-766,
                 y=392,
                 text=plant,
                 label="14 — Clique e escrever PLANT",

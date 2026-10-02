@@ -53,6 +53,9 @@ INVOICE_SERIES_TO = (-1669, 179)
 ISSUE_DATE_SELECT_FROM = (-950, 176)
 ISSUE_DATE_SELECT_TO = (-871, 178)
 
+BUSINESS_PLACE_FROM = (-1685, 242)
+BUSINESS_PLACE_TO = (-1654, 242)
+
 
 def _wait(seconds):
     # type: (float) -> None
@@ -62,14 +65,16 @@ def _wait(seconds):
 def run_one_batch(
     batch,
     total_value_sheet=None,
+    taxes_2026_plus=False,
     dry_run=False,
     stop_after=None,
     skip_countdown=False,
 ):
-    # type: (str, object, bool, object, bool) -> bool
+    # type: (str, object, bool, bool, object, bool) -> bool
     """
     Executa o fluxo completo para um Batch.
     total_value_sheet: Decimal da planilha para comparar no fim (A ↔ B ↔ planilha).
+    taxes_2026_plus: Issue Date da planilha >= 2026 → CBS1/IB2S + Enter x7 na Parte 4.
     """
     ok = parte1.main(
         dry_run=dry_run,
@@ -106,6 +111,7 @@ def run_one_batch(
 
     doc_data = None
     part4_data = None
+    business_place = None
     if stop_after != 2:
         invoice = drag_copy(
             INVOICE_SELECT_FROM[0],
@@ -131,6 +137,14 @@ def run_one_batch(
             label="ISSUE_DATE",
             dry_run=dry_run,
         )
+        business_place = drag_copy(
+            BUSINESS_PLACE_FROM[0],
+            BUSINESS_PLACE_FROM[1],
+            BUSINESS_PLACE_TO[0],
+            BUSINESS_PLACE_TO[1],
+            label="BUSINESS PLACE",
+            dry_run=dry_run,
+        )
 
         docmap.begin_part("dados_tela")
         localmap.begin_part("dados_tela")
@@ -149,12 +163,33 @@ def run_one_batch(
         part4_data = dict(screen_p4)
         if total_value_sheet is not None:
             part4_data["total_value_sheet"] = str(total_value_sheet)
+        part4_data["taxes_2026_plus"] = bool(taxes_2026_plus)
 
         print("\nDados guardados:")
         for k, v in doc_data.items():
             print("  {}: {!r}".format(k, v))
+        print("  business_place: {!r}".format(clean_value(business_place)))
         for k, v in part4_data.items():
             print("  {}: {!r}".format(k, v))
+    else:
+        # Parte 1+2: ainda precisa Issue Date → Business Place para o /oj1b1n
+        drag_copy(
+            ISSUE_DATE_SELECT_FROM[0],
+            ISSUE_DATE_SELECT_FROM[1],
+            ISSUE_DATE_SELECT_TO[0],
+            ISSUE_DATE_SELECT_TO[1],
+            label="ISSUE_DATE",
+            dry_run=dry_run,
+        )
+        business_place = drag_copy(
+            BUSINESS_PLACE_FROM[0],
+            BUSINESS_PLACE_FROM[1],
+            BUSINESS_PLACE_TO[0],
+            BUSINESS_PLACE_TO[1],
+            label="BUSINESS PLACE",
+            dry_run=dry_run,
+        )
+        print("  business_place: {!r}".format(clean_value(business_place)))
 
     print("\n--- Seguindo para a Parte 2 ---\n")
     ok2 = parte2.main(
@@ -162,6 +197,7 @@ def run_one_batch(
         chained=True,
         show_done=False,
         issuer_sap=issuer,
+        business_place=business_place,
     )
     if not ok2:
         print("Fluxo interrompido na Parte 2 (batch {}).".format(batch))
@@ -187,14 +223,6 @@ def run_one_batch(
 
     if abort.is_aborted():
         return False
-
-    print(
-        "\nAguardando {:.0f}s antes da Parte 4...\n".format(
-            config.WAIT_BETWEEN_PART3_PART4
-        )
-    )
-    if not dry_run:
-        _wait(config.WAIT_BETWEEN_PART3_PART4)
 
     print("--- Seguindo para a Parte 4 ---\n")
     ok4 = parte4.main(
@@ -259,9 +287,16 @@ def main(dry_run=False, stop_after=None, planilha=None):
                 break
             batch = item["batch"]
             total = item["total_value"]
+            taxes_2026 = bool(item.get("taxes_2026_plus"))
             print(
-                "\n========== Lançamento {}/{}  batch={}  total_value={} ==========\n".format(
-                    i + 1, len(rows), batch, total
+                "\n========== Lançamento {}/{}  batch={}  total_value={}  "
+                "issue_year={}  cbs_ibs={} ==========\n".format(
+                    i + 1,
+                    len(rows),
+                    batch,
+                    total,
+                    item.get("issue_year"),
+                    "sim" if taxes_2026 else "nao",
                 )
             )
 
@@ -269,6 +304,7 @@ def main(dry_run=False, stop_after=None, planilha=None):
                 ok = run_one_batch(
                     batch,
                     total_value_sheet=total,
+                    taxes_2026_plus=taxes_2026,
                     dry_run=dry_run,
                     stop_after=stop_after,
                     skip_countdown=(i == 0),
