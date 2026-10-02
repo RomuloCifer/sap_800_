@@ -52,13 +52,13 @@ def capture_part34_fields(dry_run=False):
 
     # 6 — Barra de rolagem horizontal (só arrastar)
     drag_only(
-        -1457, 917, -1127, 917,
+        -1457, 917, -1075, 917,
         label="barra rolagem horizontal",
         dry_run=dry_run,
     )
 
     # 7 — Price
-    price = drag_copy(-612, 480, -521, 480, label="PRICE", dry_run=dry_run)
+    price = drag_copy(-793, 481, -684, 479, label="PRICE", dry_run=dry_run)
 
     # 8–10 — Navegação
     click_point(-1757, 121, label="dados 3/4 — clique 8", dry_run=dry_run)
