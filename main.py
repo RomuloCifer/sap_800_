@@ -132,7 +132,7 @@ def run_one_batch(
 
         docmap.begin_part("dados_parte34")
         localmap.begin_part("dados_parte34")
-        screen_doc, screen_p4 = capture_part34_fields(dry_run=dry_run)
+        screen_doc, screen_p4 = capture_part34_fields(dry_run=dry_run, batch=batch)
 
         doc_data = {
             "invoice": clean_value(invoice),

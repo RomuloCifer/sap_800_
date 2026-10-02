@@ -143,15 +143,29 @@ def money_equal(a, b, places=2):
     return a.quantize(q) == b.quantize(q)
 
 
-def _ensure_run_dir(run_dir=None):
-    # type: (Optional[Path]) -> Path
+def _ensure_run_dir(run_dir=None, batch=None):
+    # type: (Optional[Path], Optional[object]) -> Path
     if run_dir is not None:
         run_dir = Path(run_dir)
         run_dir.mkdir(parents=True, exist_ok=True)
         return run_dir
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = RUNS_DIR / stamp
+    date_part = datetime.now().strftime("%Y%m%d")
+    if batch is not None and str(batch).strip():
+        safe_batch = re.sub(r"[^\w\-]+", "_", str(batch).strip())
+        base = "{}_{}".format(date_part, safe_batch)
+    else:
+        base = "{}_{}".format(date_part, datetime.now().strftime("%H%M%S"))
+
+    path = RUNS_DIR / base
+    if path.exists():
+        n = 1
+        while True:
+            candidate = RUNS_DIR / "{} ({})".format(base, n)
+            if not candidate.exists():
+                path = candidate
+                break
+            n += 1
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -370,6 +384,7 @@ def compare_total_values(value_a, value_b, value_sheet=None):
     }
 
 
-def new_run_dir():
-    # type: () -> Path
-    return _ensure_run_dir(None)
+def new_run_dir(batch=None):
+    # type: (Optional[object]) -> Path
+    """Pasta runs/YYYYMMDD_<batch>/ (sem batch: usa hora como fallback)."""
+    return _ensure_run_dir(None, batch=batch)

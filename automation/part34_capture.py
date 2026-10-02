@@ -18,13 +18,14 @@ from automation.utils import clean_value, normalize_cfop_prefix
 from automation.value_ocr import capture_print_a, new_run_dir
 
 
-def capture_part34_fields(dry_run=False):
-    # type: (bool) -> tuple
+def capture_part34_fields(dry_run=False, batch=None):
+    # type: (bool, object) -> tuple
     """
     Executa a sequência de cliques/seleções e devolve (doc_data, part4_data).
 
     doc_data: material, quantidade, price, description, cfop (sem /AA)
     part4_data: protocol_no, proc_date, proc_time, random_no, digit
+    batch: usado só para nomear a pasta runs/YYYYMMDD_<batch>/
     """
     print("\n--- Capturando dados das Partes 3/4 na tela ---\n")
 
@@ -110,7 +111,7 @@ def capture_part34_fields(dry_run=False):
     print("RANDOM NO: {!r}  DIGIT: {!r}".format(random_no, digit))
 
     # Total Value (print A) — ANTES do clique que fecha a janela
-    run_dir = new_run_dir()
+    run_dir = new_run_dir(batch=batch)
     print_a = capture_print_a(run_dir=run_dir, dry_run=dry_run)
     print(
         "TOTAL VALUE A: {} (método {}, png={!r})".format(
