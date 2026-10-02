@@ -135,7 +135,7 @@ Só pergunta o que ainda não tem legenda. Para zerar uma parte:
 python parts\parte2.py --documentar-tudo
 ```
 
-Capturar coordenadas na tela:
+### Capturar coordenadas
 
 ```powershell
 python tools\mouse_coords.py

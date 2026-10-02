@@ -811,8 +811,8 @@
           "ordem": 26,
           "kind": "click",
           "label_codigo": "TOTAL_VALUE_B — clique",
-          "nome": "Print valor B — clique (aba/campo)",
-          "obs": "Clique antes de capturar o Total Value B.",
+          "nome": "Total Values",
+          "obs": "Clique para trocar de guia antes de capturar o valor final.",
           "x": -1772,
           "y": 243
         },
@@ -1006,6 +1006,15 @@
           "obs": "Espera 3s apos o clique.",
           "x": -1014,
           "y": 222
+        },
+        {
+          "ordem": 18,
+          "kind": "click",
+          "label_codigo": "dados 3/4 — clique inicial",
+          "nome": "Products and Service",
+          "obs": "",
+          "x": -1699,
+          "y": 330
         }
       ]
     }
