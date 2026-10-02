@@ -92,8 +92,14 @@ Em PC novo (ou depois de mudar monitor / resolução / zoom do Windows), os cliq
 python main.py --mapear
 ```
 
-Em cada passo: leia o nome/obs → mova o mouse (não clique) → **F8**.  
+Em cada passo: leia o nome/obs → mova o mouse (não clique) → **F12**.  
 O bot grava em `pontos_local.json` e executa o clique.
+
+| Tecla | Ação |
+|-------|------|
+| **F12** | Gravar ponto e continuar |
+| **F11** | Voltar (desfaz o último ponto e remapeia) |
+| **F10** | Parar |
 
 | Situação | Comando |
 |----------|---------|
@@ -106,7 +112,8 @@ Ordem das partes: `parte1` → `apos_parte1` → `dados_tela` → `parte2` → `
 
 | Problema | O que fazer |
 |----------|-------------|
-| Clique no lugar errado | Refaça a parte com `--mapear`; leia a obs |
+| Errou o último ponto | **F11** (pode várias vezes); corrige o arquivo — não desfaz o clique no SAP |
+| Clique no lugar errado / SAP inconsistente | F10 + `--mapear-resto` (ou refaça a parte); leia a obs |
 | Mudou monitor / resolução / zoom | `--mapear` de novo |
 | Quer zerar esta máquina | Apague `pontos_local.json` e rode `--mapear` |
 

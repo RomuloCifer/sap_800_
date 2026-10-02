@@ -2,7 +2,8 @@
 Mapeamento local de cliques (modo --mapear).
 
 Usa mapa_passos.json (nomes/obs documentados) como guia. A outra pessoa
-posiciona o mouse e aperta F8; grava em pontos_local.json.
+posiciona o mouse e aperta F12; grava em pontos_local.json.
+F11 desfaz o último ponto e permite remapear.
 
 Sem pontos_local.json → coordenadas do código (máquina de referência).
 Com o arquivo → cliques usam o XY local.
@@ -38,6 +39,7 @@ _all_parts = {}  # type: Dict[str, dict]
 _flat = {}  # type: Dict[str, dict]  # key -> ponto (todas as partes)
 _seq = 0
 _catalog_passos = []  # type: List[dict]
+_history = []  # type: List[dict]  # ordem de captura nesta parte
 _announced = False
 
 
@@ -54,7 +56,7 @@ def is_enabled():
 def enable_from_argv(argv=None):
     # type: (Optional[list]) -> bool
     global _enabled, _keep_existing, _part, _part_pontos, _all_parts, _flat, _seq
-    global _catalog_passos, _announced
+    global _catalog_passos, _history, _announced
     args = list(argv if argv is not None else sys.argv[1:])
     if "--mapear" not in args and "--mapear-resto" not in args:
         # Modo normal: só carrega mapa local se existir (para resolve)
@@ -77,11 +79,13 @@ def enable_from_argv(argv=None):
     _keep_existing = "--mapear-resto" in args
     _part = None
     _part_pontos = {}
+    _history = []
     _seq = 0
     _catalog_passos = []
     _all_parts = _load()
     _rebuild_flat()
-    print("Modo MAPEAR: posicione o mouse no campo indicado e aperte F8.")
+    print("Modo MAPEAR: posicione o mouse e aperte F12 para gravar.")
+    print("  F11 = voltar (desfaz o último ponto)    F10 = parar")
     print("Guia: {}".format(catalog.MAP_FILE.name))
     print("Arquivo local: {}".format(LOCAL_FILE))
     if _keep_existing:
@@ -91,7 +95,7 @@ def enable_from_argv(argv=None):
 
 def begin_part(name):
     # type: (str) -> None
-    global _part, _part_pontos, _seq, _all_parts, _catalog_passos
+    global _part, _part_pontos, _seq, _all_parts, _catalog_passos, _history
     if not _enabled:
         return
 
@@ -104,6 +108,7 @@ def begin_part(name):
 
     if _keep_existing:
         _part_pontos = dict(((_all_parts.get(name) or {}).get("pontos") or {}))
+        _history = _history_from_pontos(_part_pontos)
         print(
             "\n--- Mapeando: {} ({} já gravado(s), {} no catálogo) ---\n".format(
                 name, len(_part_pontos), len(_catalog_passos)
@@ -111,6 +116,7 @@ def begin_part(name):
         )
     else:
         _part_pontos = {}
+        _history = []
         _all_parts[name] = {"pontos": {}}
         _save()
         _rebuild_flat()
@@ -124,6 +130,28 @@ def begin_part(name):
                 "Aviso: não há passos documentados para '{}'. "
                 "Rode --documentar nessa parte antes.".format(name)
             )
+
+
+def _history_from_pontos(pontos):
+    # type: (Dict[str, dict]) -> List[dict]
+    items = sorted(
+        (pontos or {}).items(),
+        key=lambda kv: int((kv[1] or {}).get("ordem") or 0),
+    )
+    out = []
+    for key, p in items:
+        p = p or {}
+        out.append(
+            {
+                "key": key,
+                "ref_x": int(p.get("ref_x") or 0),
+                "ref_y": int(p.get("ref_y") or 0),
+                "label": p.get("label_codigo") or "",
+                "kind": p.get("kind") or "click",
+                "nome": p.get("nome") or "",
+            }
+        )
+    return out
 
 
 def resolve(x, y, label, kind="click"):
@@ -191,42 +219,77 @@ def _capture(key, ref_x, ref_y, label, kind):
     if _part is None:
         begin_part("geral")
 
-    _seq += 1
-    info = _find_catalog(label, ref_x, ref_y) or {}
-    nome = (info.get("nome") or label or kind).strip()
-    obs = (info.get("obs") or "").strip()
-    if info.get("_drag_end"):
-        nome = "{} (fim da seleção)".format(nome)
+    while True:
+        info = _find_catalog(label, ref_x, ref_y) or {}
+        nome = (info.get("nome") or label or kind).strip()
+        obs = (info.get("obs") or "").strip()
+        if info.get("_drag_end"):
+            nome = "{} (fim da seleção)".format(nome)
 
-    print("  [{} #{}] mapeie: {}".format(_part, _seq, nome))
-    if obs:
-        print("           obs: {}".format(obs))
+        seq = len(_history) + 1
+        print("  [{} #{}] mapeie: {}".format(_part, seq, nome))
+        if obs:
+            print("           obs: {}".format(obs))
 
-    lx, ly = _ask_position(nome, obs, kind, _seq)
-    entry = {
-        "ordem": _seq,
-        "kind": kind,
-        "label_codigo": label,
-        "nome": nome,
-        "obs": obs,
-        "ref_x": ref_x,
-        "ref_y": ref_y,
-        "x": lx,
-        "y": ly,
-    }
-    _part_pontos[key] = entry
-    _all_parts[_part] = {"pontos": dict(_part_pontos)}
-    _save()
-    _rebuild_flat()
-    print("  gravado: {} → ({}, {})".format(nome, lx, ly))
-    return lx, ly
+        action = _ask_position(nome, obs, kind, seq)
+        if action[0] == "undo":
+            if not _history:
+                print("  (nada para voltar)")
+                continue
+            prev = _history.pop()
+            _part_pontos.pop(prev["key"], None)
+            _all_parts[_part] = {"pontos": dict(_part_pontos)}
+            _save()
+            _rebuild_flat()
+            print(
+                "  voltou: desfez {!r}".format(prev.get("nome") or prev.get("label"))
+            )
+            # Remapeia o anterior (atualiza o JSON; o clique no SAP já ocorreu)
+            _capture(
+                prev["key"],
+                int(prev["ref_x"]),
+                int(prev["ref_y"]),
+                prev["label"],
+                prev["kind"],
+            )
+            continue
+
+        lx, ly = int(action[1]), int(action[2])
+        entry = {
+            "ordem": seq,
+            "kind": kind,
+            "label_codigo": label,
+            "nome": nome,
+            "obs": obs,
+            "ref_x": ref_x,
+            "ref_y": ref_y,
+            "x": lx,
+            "y": ly,
+        }
+        _part_pontos[key] = entry
+        _history.append(
+            {
+                "key": key,
+                "ref_x": ref_x,
+                "ref_y": ref_y,
+                "label": label,
+                "kind": kind,
+                "nome": nome,
+            }
+        )
+        _all_parts[_part] = {"pontos": dict(_part_pontos)}
+        _save()
+        _rebuild_flat()
+        _seq = seq
+        print("  gravado: {} → ({}, {})".format(nome, lx, ly))
+        return lx, ly
 
 
 def _ask_position(nome, obs, kind, seq):
-    # type: (str, str, str, int) -> Tuple[int, int]
+    # type: (str, str, str, int) -> Tuple
     from automation import win_mouse
 
-    confirmed = {"ok": False}
+    result = {"action": None}  # type: dict
     root = tk.Tk()
     root.title("Mapear — {}".format(_part or ""))
     root.attributes("-topmost", True)
@@ -262,7 +325,11 @@ def _ask_position(nome, obs, kind, seq):
 
     tk.Label(
         root,
-        text="Posicione o mouse no lugar certo nesta tela e aperte F8\n(não precisa clicar — a automação faz o clique).",
+        text=(
+            "Posicione o mouse no lugar certo e aperte F12 para gravar\n"
+            "(não precisa clicar — a automação faz o clique).\n"
+            "F11 volta o último ponto (não desfaz o clique já feito no SAP)."
+        ),
         font=("Segoe UI", 10),
         fg="#cccccc",
         bg="#1a1a2e",
@@ -280,7 +347,9 @@ def _ask_position(nome, obs, kind, seq):
 
     tk.Label(
         root,
-        text="F8 = confirmar    {} = parar".format(abort.ABORT_KEY_NAME),
+        text="F12 = gravar    F11 = voltar    {} = parar".format(
+            abort.ABORT_KEY_NAME
+        ),
         font=("Segoe UI", 9),
         fg="#8888aa",
         bg="#1a1a2e",
@@ -300,8 +369,10 @@ def _ask_position(nome, obs, kind, seq):
             pass
 
     def _on_key(key):
-        if key == keyboard.Key.f8:
-            confirmed["ok"] = True
+        if key == keyboard.Key.f12:
+            result["action"] = "ok"
+        elif key == keyboard.Key.f11:
+            result["action"] = "undo"
 
     listener = keyboard.Listener(on_press=_on_key)
     listener.daemon = True
@@ -310,7 +381,7 @@ def _ask_position(nome, obs, kind, seq):
 
     root.protocol("WM_DELETE_WINDOW", abort.request_abort)
 
-    while not confirmed["ok"]:
+    while result["action"] is None:
         abort.check()
         try:
             root.update()
@@ -327,12 +398,17 @@ def _ask_position(nome, obs, kind, seq):
     except Exception:
         pass
 
-    if not confirmed["ok"]:
+    if result["action"] == "undo":
+        time.sleep(0.1)
+        return ("undo",)
+
+    if result["action"] != "ok":
         raise RuntimeError("Mapeamento cancelado no passo {}.".format(seq))
 
-    # Pequena pausa para soltar o F8 antes do clique da automação
+    # Pausa para soltar o F12 antes do clique da automação
     time.sleep(0.15)
-    return win_mouse.position()
+    x, y = win_mouse.position()
+    return ("ok", x, y)
 
 
 def _load():
