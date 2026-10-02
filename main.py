@@ -62,14 +62,16 @@ def _wait(seconds):
 def run_one_batch(
     batch,
     total_value_sheet=None,
+    taxes_2026_plus=False,
     dry_run=False,
     stop_after=None,
     skip_countdown=False,
 ):
-    # type: (str, object, bool, object, bool) -> bool
+    # type: (str, object, bool, bool, object, bool) -> bool
     """
     Executa o fluxo completo para um Batch.
     total_value_sheet: Decimal da planilha para comparar no fim (A ↔ B ↔ planilha).
+    taxes_2026_plus: Issue Date da planilha >= 2026 → CBS1/IB2S + Enter x7 na Parte 4.
     """
     ok = parte1.main(
         dry_run=dry_run,
@@ -149,6 +151,7 @@ def run_one_batch(
         part4_data = dict(screen_p4)
         if total_value_sheet is not None:
             part4_data["total_value_sheet"] = str(total_value_sheet)
+        part4_data["taxes_2026_plus"] = bool(taxes_2026_plus)
 
         print("\nDados guardados:")
         for k, v in doc_data.items():
@@ -259,9 +262,16 @@ def main(dry_run=False, stop_after=None, planilha=None):
                 break
             batch = item["batch"]
             total = item["total_value"]
+            taxes_2026 = bool(item.get("taxes_2026_plus"))
             print(
-                "\n========== Lançamento {}/{}  batch={}  total_value={} ==========\n".format(
-                    i + 1, len(rows), batch, total
+                "\n========== Lançamento {}/{}  batch={}  total_value={}  "
+                "issue_year={}  cbs_ibs={} ==========\n".format(
+                    i + 1,
+                    len(rows),
+                    batch,
+                    total,
+                    item.get("issue_year"),
+                    "sim" if taxes_2026 else "nao",
                 )
             )
 
@@ -269,6 +279,7 @@ def main(dry_run=False, stop_after=None, planilha=None):
                 ok = run_one_batch(
                     batch,
                     total_value_sheet=total,
+                    taxes_2026_plus=taxes_2026,
                     dry_run=dry_run,
                     stop_after=stop_after,
                     skip_countdown=(i == 0),
