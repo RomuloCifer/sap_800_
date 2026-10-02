@@ -31,7 +31,7 @@ from automation import abort, docmap, localmap, win_mouse
 from automation.capture import drag_copy
 from automation.forms import ask_fields
 from automation.lancamentos import load_lancamentos, resolve_planilha_from_argv
-from automation.part34_capture import capture_part34_fields
+from automation.captura_dados_tela import capturar_dados_tela
 from automation.ui import countdown
 from automation.utils import clean_value
 from parts import parte1, parte2, parte3, parte4
@@ -130,9 +130,9 @@ def run_one_batch(
             dry_run=dry_run,
         )
 
-        docmap.begin_part("dados_parte34")
-        localmap.begin_part("dados_parte34")
-        screen_doc, screen_p4 = capture_part34_fields(dry_run=dry_run, batch=batch)
+        docmap.begin_part("dados_tela")
+        localmap.begin_part("dados_tela")
+        screen_doc, screen_p4 = capturar_dados_tela(dry_run=dry_run, batch=batch)
 
         doc_data = {
             "invoice": clean_value(invoice),

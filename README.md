@@ -1,14 +1,24 @@
 # SAP 800 — automação de cliques / preenchimento
 
-Projeto para automatizar sequências repetitivas de clique e digitação
-(ex.: lançamentos no SAP).
+Automatiza lançamentos repetitivos no SAP (cliques, digitação, validação de valor).
 
-## Usar em outra máquina?
+**Qual caminho seguir?**
 
-Leia o guia: **[COMO_MAPEAR.md](COMO_MAPEAR.md)**  
-(passo a passo simples: instalar → mapear com F8 → usar o bot)
+| Situação | Vá para |
+|----------|---------|
+| Máquina já mapeada ou a de referência | [1. Setup](#1-setup) → [2. Rodar](#2-rodar) |
+| PC novo / outra resolução | [1. Setup](#1-setup) → [3. Mapear uma vez](#3-mapear-uma-vez) → [2. Rodar](#2-rodar) |
 
-## Setup (Windows / PowerShell)
+Arquivos importantes:
+
+- `mapa_passos.json` — vem com o projeto (nomes dos cliques). **Não apague.**
+- `pontos_local.json` — gerado na **sua** máquina com `--mapear`. Não versionar / não compartilhar.
+
+Emergência: **F10** para a automação a qualquer momento.
+
+---
+
+## 1. Setup
 
 ```powershell
 cd "caminho\para\sap_800"
@@ -18,35 +28,30 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Tesseract OCR (obrigatório para validação de valor)
-
-A checagem de **Total Value** (prints na tela) usa OCR via `pytesseract`.
-Além do `pip install`, é preciso instalar o **motor Tesseract** no Windows:
-
-```powershell
-winget install UB-Mannheim.TesseractOCR
-```
-
-Depois do install, **feche e abra** o PowerShell (para atualizar o PATH) e confira:
-
-```powershell
-tesseract --version
-```
-
-Se o comando não for encontrado, o bot ainda tenta o caminho padrão
-`C:\Program Files\Tesseract-OCR\tesseract.exe` (instalação via winget).
-Se mesmo assim falhar, adicione essa pasta ao PATH ou reinicie o PC.
-
-Sem o Tesseract, o bot ainda tenta ler o valor via clipboard (fallback),
-mas o OCR é o caminho recomendado.
-
-Se a execução de scripts estiver bloqueada:
+Se scripts estiverem bloqueados:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 
-## Rodar o fluxo (máquina já mapeada ou a de referência)
+Sempre que reabrir o PowerShell nesta pasta:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+### Tesseract (OCR do Total Value)
+
+```powershell
+winget install UB-Mannheim.TesseractOCR
+```
+
+Feche e abra o PowerShell, depois confira com `tesseract --version`.  
+Se não achar o comando, o bot tenta `C:\Program Files\Tesseract-OCR\tesseract.exe`. Sem Tesseract ainda há fallback via clipboard.
+
+---
+
+## 2. Rodar
 
 Coloque a planilha em `entrada/lancamentos.xlsx` (colunas **Batch** e **Total Value**).
 
@@ -54,16 +59,13 @@ Coloque a planilha em `entrada/lancamentos.xlsx` (colunas **Batch** e **Total Va
 python main.py
 ```
 
-O bot lê os batches da planilha, pede só o tempo de espera, e no fim compara
-Total Value da planilha com os dois prints da tela (OCR).
+O bot lê os batches, pede o tempo de espera e no fim compara o Total Value da planilha com os prints da tela (OCR).
 
 Planilha em outro caminho:
 
 ```powershell
 python main.py --planilha "C:\caminho\lancamentos.xlsx"
 ```
-
-Emergência: **F10** para a qualquer momento.
 
 Só uma parte:
 
@@ -72,17 +74,55 @@ python parts\parte1.py
 python parts\parte2.py
 ```
 
-## Para quem mantém o projeto (máquina de referência)
+---
 
-### Documentar nomes dos cliques
+## 3. Mapear uma vez
+
+Em PC novo (ou depois de mudar monitor / resolução / zoom do Windows), os cliques precisam ser ensinados **uma vez**. O mapeamento **roda o fluxo de verdade no SAP** — use um caso de teste.
+
+### Antes
+
+- SAP aberto no monitor que você vai usar
+- Mesma escala do Windows do dia a dia (100%, 125%, etc.)
+- Dados do formulário em mãos (Batch, material, etc.)
+
+### Como mapear
+
+```powershell
+python main.py --mapear
+```
+
+Em cada passo: leia o nome/obs → mova o mouse (não clique) → **F8**.  
+O bot grava em `pontos_local.json` e executa o clique.
+
+| Situação | Comando |
+|----------|---------|
+| Primeira vez / refazer tudo | `python main.py --mapear` |
+| Continuar depois de erro / F10 | `python main.py --mapear-resto` |
+| Refazer só uma parte | `python parts\parte2.py --mapear` |
+| Uso no dia a dia (já mapeado) | `python main.py` |
+
+Ordem das partes: `parte1` → `apos_parte1` → `dados_tela` → `parte2` → `parte3` → `parte4`.
+
+| Problema | O que fazer |
+|----------|-------------|
+| Clique no lugar errado | Refaça a parte com `--mapear`; leia a obs |
+| Mudou monitor / resolução / zoom | `--mapear` de novo |
+| Quer zerar esta máquina | Apague `pontos_local.json` e rode `--mapear` |
+
+Não rode `--documentar` neste PC — isso é só de quem mantém o catálogo.
+
+---
+
+## 4. Manutenção (máquina de referência)
+
+Documentar nomes/obs dos cliques (atualiza `mapa_passos.json` — **commitar**):
 
 ```powershell
 python main.py --documentar
 ```
 
-Gera/atualiza `mapa_passos.json` (por parte). Antes de cada clique: nome + obs.
-
-### Capturar coordenadas
+Capturar coordenadas na tela:
 
 ```powershell
 python tools\mouse_coords.py
@@ -94,6 +134,8 @@ python tools\mouse_coords.py
 | **F9** | Anota em `tools\coordenadas.txt` |
 | **ESC** | Sai |
 
+---
+
 ## Dependências
 
 | Pacote | Uso |
@@ -101,5 +143,5 @@ python tools\mouse_coords.py
 | `pyautogui` | Clique, digitação |
 | `pynput` / `keyboard` / `mouse` | Input |
 | `Pillow` / `mss` / `opencv-python` | Tela / screenshots |
-| `pytesseract` | OCR (requer **Tesseract** no sistema — ver setup acima) |
+| `pytesseract` | OCR (requer Tesseract no sistema) |
 | `pyperclip` | Área de transferência |

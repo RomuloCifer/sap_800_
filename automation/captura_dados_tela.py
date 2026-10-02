@@ -1,5 +1,5 @@
 """
-Captura automática na tela dos dados das Partes 3 e 4
+Captura automática na tela dos dados usados nas Partes 3 e 4
 (material, description, cfop, quantidade, price, protocol, etc.).
 
 Substitui o formulário manual após a Parte 1 no fluxo completo.
@@ -18,7 +18,7 @@ from automation.utils import clean_value, normalize_cfop_prefix
 from automation.value_ocr import capture_print_a, new_run_dir
 
 
-def capture_part34_fields(dry_run=False, batch=None):
+def capturar_dados_tela(dry_run=False, batch=None):
     # type: (bool, object) -> tuple
     """
     Executa a sequência de cliques/seleções e devolve (doc_data, part4_data).
@@ -27,7 +27,7 @@ def capture_part34_fields(dry_run=False, batch=None):
     part4_data: protocol_no, proc_date, proc_time, random_no, digit
     batch: usado só para nomear a pasta runs/YYYYMMDD_<batch>/
     """
-    print("\n--- Capturando dados das Partes 3/4 na tela ---\n")
+    print("\n--- Capturando dados na tela (Partes 3/4) ---\n")
 
     # 1 — Clique
     click_point(-1699, 330, label="dados 3/4 — clique inicial", dry_run=dry_run)
