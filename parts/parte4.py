@@ -83,10 +83,13 @@ _VALUE_PASTE_2026 = (
 )
 
 
-def _tax_click_type_enter(label, x, y, code):
-    # type: (str, int, int, str) -> list
-    """Clique na célula, cola o código (Ctrl+V) e Enter x2 — sem dropdown."""
-    return [
+def _tax_click_type_enter(label, x, y, code, click_before_enter=None):
+    # type: (str, int, int, str, object) -> list
+    """
+    Clique na célula, cola o código (Ctrl+V) e Enter x2.
+    click_before_enter: (x, y) opcional — clique entre digitar e o Enter x2.
+    """
+    steps = [
         Step(
             "click_and_type",
             x=x,
@@ -94,14 +97,27 @@ def _tax_click_type_enter(label, x, y, code):
             text=code,
             label="{} — Clique e escrever {}".format(label, code),
         ),
+    ]
+    if click_before_enter is not None:
+        cx, cy = click_before_enter
+        steps.append(
+            Step(
+                "click",
+                x=cx,
+                y=cy,
+                label="{} — Clique antes do Enter ({})".format(label, code),
+            )
+        )
+    steps.append(
         Step(
             "press",
             keys=["enter"],
             press_times=2,
             press_interval=0.3,
             label="{} — Enter x2 ({})".format(label, code),
-        ),
-    ]
+        )
+    )
+    return steps
 
 
 def build_steps_before_value(taxes_2026_plus=False):
@@ -109,20 +125,24 @@ def build_steps_before_value(taxes_2026_plus=False):
     """
     Impostos iniciais: clique + código + Enter x2 em cada taxa.
     Antes de 2026: ICOF/ICM0/IPI0/IPIS (4).
-    2026+: + CBS1 e IB2S (6) e 2 cliques extras antes do VALUE.
+    2026+: + CBS1 e IB2S; clique extra após digitar cada um, antes do Enter.
     """
     steps = []
     for label, x, y, code in _TAX_CELLS_LEGACY:
         steps.extend(_tax_click_type_enter(label, x, y, code))
     if taxes_2026_plus:
+        # CBS1: digitar → clique → Enter x2
+        # IB2S: digitar → clique → Enter x2
         for label, x, y, code in _TAX_CELLS_2026_EXTRA:
-            steps.extend(_tax_click_type_enter(label, x, y, code))
-        steps.append(
-            Step("click", x=-1151, y=393, label="6b — Clique após IB2S")
-        )
-        steps.append(
-            Step("click", x=-1151, y=435, label="6c — Clique após IB2S")
-        )
+            if code == "CBS1":
+                before = (-1152, 478)
+            elif code == "IB2S":
+                before = (-1152, 501)
+            else:
+                before = None
+            steps.extend(
+                _tax_click_type_enter(label, x, y, code, click_before_enter=before)
+            )
     return steps
 
 

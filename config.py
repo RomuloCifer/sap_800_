@@ -18,7 +18,6 @@ WAIT_AFTER_OPEN_SAP = 4.0
 WAIT_AFTER_EXECUTE = 3.0
 WAIT_BETWEEN_DROPDOWN = 1.5  # Parte 2: intervalo entre os 2 cliques do passo 6
 WAIT_AFTER_PART1 = 5.0  # após Parte 1, antes de copiar ISSUER/INVOICE na tela
-WAIT_BETWEEN_PART3_PART4 = 5.0  # antes da Parte 4
 
 def apply_user_wait(seconds):
     # type: (float) -> float

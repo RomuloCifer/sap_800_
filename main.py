@@ -53,6 +53,9 @@ INVOICE_SERIES_TO = (-1669, 179)
 ISSUE_DATE_SELECT_FROM = (-950, 176)
 ISSUE_DATE_SELECT_TO = (-871, 178)
 
+BUSINESS_PLACE_FROM = (-1685, 242)
+BUSINESS_PLACE_TO = (-1654, 242)
+
 
 def _wait(seconds):
     # type: (float) -> None
@@ -108,6 +111,7 @@ def run_one_batch(
 
     doc_data = None
     part4_data = None
+    business_place = None
     if stop_after != 2:
         invoice = drag_copy(
             INVOICE_SELECT_FROM[0],
@@ -133,6 +137,14 @@ def run_one_batch(
             label="ISSUE_DATE",
             dry_run=dry_run,
         )
+        business_place = drag_copy(
+            BUSINESS_PLACE_FROM[0],
+            BUSINESS_PLACE_FROM[1],
+            BUSINESS_PLACE_TO[0],
+            BUSINESS_PLACE_TO[1],
+            label="BUSINESS PLACE",
+            dry_run=dry_run,
+        )
 
         docmap.begin_part("dados_tela")
         localmap.begin_part("dados_tela")
@@ -156,8 +168,28 @@ def run_one_batch(
         print("\nDados guardados:")
         for k, v in doc_data.items():
             print("  {}: {!r}".format(k, v))
+        print("  business_place: {!r}".format(clean_value(business_place)))
         for k, v in part4_data.items():
             print("  {}: {!r}".format(k, v))
+    else:
+        # Parte 1+2: ainda precisa Issue Date → Business Place para o /oj1b1n
+        drag_copy(
+            ISSUE_DATE_SELECT_FROM[0],
+            ISSUE_DATE_SELECT_FROM[1],
+            ISSUE_DATE_SELECT_TO[0],
+            ISSUE_DATE_SELECT_TO[1],
+            label="ISSUE_DATE",
+            dry_run=dry_run,
+        )
+        business_place = drag_copy(
+            BUSINESS_PLACE_FROM[0],
+            BUSINESS_PLACE_FROM[1],
+            BUSINESS_PLACE_TO[0],
+            BUSINESS_PLACE_TO[1],
+            label="BUSINESS PLACE",
+            dry_run=dry_run,
+        )
+        print("  business_place: {!r}".format(clean_value(business_place)))
 
     print("\n--- Seguindo para a Parte 2 ---\n")
     ok2 = parte2.main(
@@ -165,6 +197,7 @@ def run_one_batch(
         chained=True,
         show_done=False,
         issuer_sap=issuer,
+        business_place=business_place,
     )
     if not ok2:
         print("Fluxo interrompido na Parte 2 (batch {}).".format(batch))
@@ -190,14 +223,6 @@ def run_one_batch(
 
     if abort.is_aborted():
         return False
-
-    print(
-        "\nAguardando {:.0f}s antes da Parte 4...\n".format(
-            config.WAIT_BETWEEN_PART3_PART4
-        )
-    )
-    if not dry_run:
-        _wait(config.WAIT_BETWEEN_PART3_PART4)
 
     print("--- Seguindo para a Parte 4 ---\n")
     ok4 = parte4.main(

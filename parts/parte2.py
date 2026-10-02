@@ -2,6 +2,7 @@
 Parte 2 da automação SAP.
 
 Quando vem da Parte 1 com issuer_sap já capturado, não pede formulário.
+Business place vem da tela (após Issue Date); se ausente, mantém 0001.
 """
 
 from __future__ import annotations
@@ -20,13 +21,28 @@ from automation import abort, docmap, localmap, win_mouse
 from automation.forms import ask_fields
 from automation.runner import Step, run_steps
 from automation.ui import countdown
+from automation.utils import clean_value
 import config
 
 win_mouse.ensure_dpi_awareness()
 
+DEFAULT_BUSINESS_PLACE = "0001"
 
-def build_steps_before_issuer():
-    # type: () -> list
+
+def _normalize_business_place(value):
+    # type: (object) -> str
+    """Mantém dígitos; completa com zeros à esquerda até 4 (ex.: 15 → 0015)."""
+    text = clean_value(value)
+    digits = "".join(ch for ch in text if ch.isdigit())
+    if not digits:
+        return DEFAULT_BUSINESS_PLACE
+    if len(digits) >= 4:
+        return digits
+    return digits.zfill(4)
+
+
+def build_steps_before_issuer(business_place=DEFAULT_BUSINESS_PLACE):
+    # type: (str) -> list
     return [
         Step(
             "click_and_type",
@@ -61,8 +77,8 @@ def build_steps_before_issuer():
             "click_and_type",
             x=-1707,
             y=286,
-            text="0001",
-            label="5 — Clique e escrever 0001",
+            text=business_place,
+            label="5 — Clique e escrever BUSINESS PLACE ({})".format(business_place),
         ),
         Step(
             "click",
@@ -100,11 +116,18 @@ def build_steps_after_issuer(issuer_sap):
     ]
 
 
-def main(dry_run=False, chained=False, show_done=True, issuer_sap=None):
-    # type: (bool, bool, bool, object) -> bool
+def main(
+    dry_run=False,
+    chained=False,
+    show_done=True,
+    issuer_sap=None,
+    business_place=None,
+):
+    # type: (bool, bool, bool, object, object) -> bool
     """
     chained=True: veio da Parte 1.
     issuer_sap: se informado, não abre formulário (capturado da tela).
+    business_place: capturado após Issue Date; default 0001.
     """
     docmap.enable_from_argv()
     localmap.enable_from_argv()
@@ -130,7 +153,9 @@ def main(dry_run=False, chained=False, show_done=True, issuer_sap=None):
             else:
                 countdown(config.COUNTDOWN_START, "Foque a tela do SAP!\nIniciando Parte 2 em...")
 
-        run_steps(build_steps_before_issuer(), dry_run=dry_run)
+        bp = _normalize_business_place(business_place)
+        print("BUSINESS PLACE: {!r}".format(bp))
+        run_steps(build_steps_before_issuer(bp), dry_run=dry_run)
 
         if issuer_sap:
             issuer = issuer_sap.strip()
@@ -156,7 +181,10 @@ def main(dry_run=False, chained=False, show_done=True, issuer_sap=None):
             messagebox.showinfo("Parte 2", "Parte 2 concluída com sucesso.")
         return True
     except abort.AbortedError:
-        messagebox.showwarning("Abortado", "Parte 2 interrompida ({}).".format(abort.ABORT_KEY_NAME))
+        messagebox.showwarning(
+            "Abortado",
+            "Parte 2 interrompida ({}).".format(abort.ABORT_KEY_NAME),
+        )
         return False
     except Exception as exc:
         print("ERRO:", exc)
