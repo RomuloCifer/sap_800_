@@ -1,12 +1,13 @@
 """
 Documentação dos passos com clique (modo --documentar).
 
-Antes de cada ação de mouse, pergunta nome + observação e grava em
-mapa_passos.json, separado por parte (parte1, parte2, …).
+Antes de cada ação de mouse sem legenda, pergunta nome + observação e grava
+em mapa_passos.json, separado por parte (parte1, parte2, …).
 
-Se der erro no meio, as partes já documentadas ficam salvas. Para refazer
-só uma parte: rode de novo com --documentar (no main ou na parte isolada);
-só a parte atual é sobrescrita.
+  python main.py --documentar       # só o que ainda não tem nome
+  python main.py --documentar-tudo  # zera a parte atual e documenta do zero
+
+Se der erro no meio, o que já estava salvo permanece.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from automation.forms import ask_fields
 
@@ -24,6 +25,7 @@ MAP_FILE = ROOT / "mapa_passos.json"
 MOUSE_KINDS = frozenset({"click", "double_click", "click_and_type", "click_and_press"})
 
 _enabled = False
+_keep_existing = True
 _part = None  # type: Optional[str]
 _entries = []  # type: List[dict]
 _seq = 0
@@ -37,51 +39,97 @@ def is_enabled():
 
 def enable_from_argv(argv=None):
     # type: (Optional[list]) -> bool
-    """Liga o modo se --documentar estiver nos args. Retorna True se ativo."""
-    global _enabled, _entries, _seq, _part, _all_parts
+    """Liga o modo se --documentar / --documentar-tudo estiver nos args."""
+    global _enabled, _keep_existing, _entries, _seq, _part, _all_parts
     args = list(argv if argv is not None else sys.argv[1:])
-    if "--documentar" not in args:
+    if "--documentar" not in args and "--documentar-tudo" not in args:
         return False
     _enabled = True
+    _keep_existing = "--documentar-tudo" not in args
     _entries = []
     _seq = 0
     _part = None
     _all_parts = _load()
-    print("Modo DOCUMENTAR: nome/obs antes de cada clique (salvo por parte).")
+    print("Modo DOCUMENTAR: nome/obs nos cliques ainda sem legenda.")
     print("Arquivo: {}".format(MAP_FILE))
+    if _keep_existing:
+        print("(mantém o já documentado; use --documentar-tudo para refazer do zero)")
+    else:
+        print("(--documentar-tudo: apaga a parte atual e documenta de novo)")
     ja = sorted(_all_parts.keys())
     if ja:
-        print(
-            "Partes já no arquivo: {} (só a parte atual será sobrescrita).".format(
-                ", ".join(ja)
-            )
-        )
+        print("Partes já no arquivo: {}.".format(", ".join(ja)))
     return True
 
 
 def begin_part(name):
     # type: (str) -> None
     """
-    Inicia (ou reinicia) a documentação de uma parte.
-    Apaga só essa parte no mapa; as outras permanecem.
+    Inicia a documentação de uma parte.
+    Com --documentar: mantém passos já salvos.
+    Com --documentar-tudo: limpa só essa parte.
     """
     global _part, _entries, _seq, _all_parts
     if not _enabled:
         return
     _all_parts = _load()
     _part = name
-    _entries = []
     _seq = 0
-    _all_parts[name] = {"passos": []}
-    _save()
-    print("\n--- Documentando: {} (passos anteriores desta parte limpos) ---\n".format(name))
+
+    if _keep_existing:
+        _entries = list(((_all_parts.get(name) or {}).get("passos") or []))
+        print(
+            "\n--- Documentando: {} ({} já no catálogo; só pede o que faltar) ---\n".format(
+                name, len(_entries)
+            )
+        )
+    else:
+        _entries = []
+        _all_parts[name] = {"passos": []}
+        _save()
+        print(
+            "\n--- Documentando: {} do zero (passos anteriores desta parte limpos) ---\n".format(
+                name
+            )
+        )
+
+
+def _coords_match(step, x, y, x2, y2):
+    # type: (dict, Optional[int], Optional[int], Optional[int], Optional[int]) -> bool
+    if x is not None:
+        if step.get("x") is None or int(step["x"]) != int(x):
+            return False
+    if y is not None:
+        if step.get("y") is None or int(step["y"]) != int(y):
+            return False
+    if x2 is not None:
+        if step.get("x2") is None or int(step["x2"]) != int(x2):
+            return False
+    if y2 is not None:
+        if step.get("y2") is None or int(step["y2"]) != int(y2):
+            return False
+    return True
+
+
+def _find_entry(kind, label, x, y, x2, y2):
+    # type: (str, str, Optional[int], Optional[int], Optional[int], Optional[int]) -> Tuple[Optional[int], Optional[dict]]
+    hint = label or kind
+    for i, step in enumerate(_entries):
+        if (step.get("kind") or "") != kind:
+            continue
+        if (step.get("label_codigo") or "") != hint:
+            continue
+        if not _coords_match(step, x, y, x2, y2):
+            continue
+        return i, step
+    return None, None
 
 
 def maybe_ask_step(kind, label, x=None, y=None, x2=None, y2=None, extra=None):
     # type: (str, str, Optional[int], Optional[int], Optional[int], Optional[int], Optional[dict]) -> None
     """
-    Se o modo estiver ativo e for ação com mouse, posiciona o cursor no
-    ponto do clique, abre o formulário (campos vazios) e grava a entrada.
+    Se o modo estiver ativo e for ação com mouse: se já tem nome no catálogo,
+    pula; senão pergunta e grava.
     """
     global _seq
     if not _enabled:
@@ -93,32 +141,52 @@ def maybe_ask_step(kind, label, x=None, y=None, x2=None, y2=None, extra=None):
 
     from automation import win_mouse
 
-    _seq += 1
     hint = label or kind
-    print("  [{} #{}] (label código: {})".format(_part, _seq, hint))
+    idx, existing = _find_entry(kind, hint, x, y, x2, y2)
+    if (
+        _keep_existing
+        and existing is not None
+        and (existing.get("nome") or "").strip()
+    ):
+        print(
+            "  [{}] já documentado: {!r}".format(
+                _part, (existing.get("nome") or "").strip()
+            )
+        )
+        return
+
+    _seq += 1
+    ordem = _seq if not _entries else max(
+        int(e.get("ordem") or 0) for e in _entries
+    ) + 1
+    print("  [{} #{}] (label código: {})".format(_part, ordem, hint))
 
     if x is not None and y is not None:
         win_mouse.move_to(int(x), int(y))
 
     form = ask_fields(
-        title="{} — passo {} ({})".format(_part, _seq, kind),
+        title="{} — passo {} ({})".format(_part, ordem, kind),
         fields=[
             ("nome", "Nome do campo / clique"),
             ("obs", "Observação (opcional)"),
         ],
         start_label="Continuar",
         optional=["obs"],
+        defaults={
+            "nome": (existing.get("nome") or "") if existing else "",
+            "obs": (existing.get("obs") or "") if existing else "",
+        },
     )
     if form is None:
         raise RuntimeError(
-            "Documentação cancelada em {} passo {}.".format(_part, _seq)
+            "Documentação cancelada em {} passo {}.".format(_part, ordem)
         )
 
     nome = (form.get("nome") or "").strip()
     obs = (form.get("obs") or "").strip()
 
     entry = {
-        "ordem": _seq,
+        "ordem": int(existing["ordem"]) if existing and existing.get("ordem") else ordem,
         "kind": kind,
         "label_codigo": hint,
         "nome": nome,
@@ -130,10 +198,17 @@ def maybe_ask_step(kind, label, x=None, y=None, x2=None, y2=None, extra=None):
     if x2 is not None and y2 is not None:
         entry["x2"] = int(x2)
         entry["y2"] = int(y2)
+    if existing:
+        for key in ("text", "keys"):
+            if key in existing and key not in entry:
+                entry[key] = existing[key]
     if extra:
         entry.update(extra)
 
-    _entries.append(entry)
+    if idx is not None:
+        _entries[idx] = entry
+    else:
+        _entries.append(entry)
     _all_parts[_part] = {"passos": list(_entries)}
     _save()
     print("  documentado: {!r}".format(nome))

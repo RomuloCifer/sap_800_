@@ -9,6 +9,35 @@ import tkinter as tk
 from automation import abort
 
 
+def place_window_left_screen(root, margin_x=24, margin_y=80, anchor="bottom"):
+    # type: (tk.Misc, int, int, str) -> None
+    """
+    Posiciona a janela no monitor da esquerda (área virtual).
+
+    Neste setup o SAP fica à esquerda (coords negativas); o tkinter
+    costuma abrir no monitor primário da direita.
+    """
+    root.update_idletasks()
+    w = max(root.winfo_width(), 1)
+    h = max(root.winfo_height(), 1)
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        vx = int(user32.GetSystemMetrics(76))  # SM_XVIRTUALSCREEN
+        vy = int(user32.GetSystemMetrics(77))  # SM_YVIRTUALSCREEN
+        vh = int(user32.GetSystemMetrics(79))  # SM_CYVIRTUALSCREEN
+    except Exception:
+        vx, vy, vh = 0, 0, root.winfo_screenheight()
+
+    x = vx + margin_x
+    if anchor == "top":
+        y = vy + margin_y
+    else:
+        y = vy + max(margin_y, vh - h - margin_y)
+    root.geometry("+{}+{}".format(int(x), int(y)))
+
+
 def countdown(seconds, message="Foque a tela do SAP!\nContinuando em..."):
     # type: (int, str) -> None
     root = tk.Tk()
@@ -44,10 +73,7 @@ def countdown(seconds, message="Foque a tela do SAP!\nContinuando em..."):
     )
     hint.pack(pady=(6, 0))
 
-    root.update_idletasks()
-    w = root.winfo_width()
-    sw = root.winfo_screenwidth()
-    root.geometry("+{}+40".format((sw - w) // 2))
+    place_window_left_screen(root, margin_y=40, anchor="top")
 
     try:
         for n in range(seconds, 0, -1):

@@ -9,9 +9,11 @@ Uso:
   python main.py --ate-2      # só partes 1 e 2
   python main.py --dry-run
   python main.py --planilha caminho\\arquivo.xlsx
-  python main.py --documentar
-  python main.py --mapear
-  python main.py --mapear-resto
+  python main.py --documentar       # só passos ainda sem legenda
+  python main.py --documentar-tudo  # zera a parte e documenta do zero
+  python main.py --mapear         # pede só pontos sem coordenada local
+  python main.py --mapear-resto   # alias de --mapear
+  python main.py --mapear-tudo    # remapeia a parte do zero
 
 Emergência: F10 para a automação a qualquer momento.
 """
