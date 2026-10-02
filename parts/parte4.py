@@ -22,7 +22,7 @@ from automation.capture import drag_copy
 from automation.forms import ask_fields, validate_random_no
 from automation.runner import Step, run_steps
 from automation.ui import countdown
-from automation.utils import build_tax_steps, clean_value
+from automation.utils import clean_value
 from automation.value_ocr import (
     capture_print_b,
     compare_total_values,
@@ -56,6 +56,18 @@ def capture_value_from_screen(dry_run=False):
     )
 
 
+# Células de imposto (clique + colar código + Enter x2)
+_TAX_CELLS_LEGACY = (
+    ("1", -1855, 391, "ICOF"),
+    ("2", -1855, 414, "ICM0"),
+    ("3", -1855, 433, "IPI0"),
+    ("4", -1855, 455, "IPIS"),
+)
+_TAX_CELLS_2026_EXTRA = (
+    ("5", -1864, 480, "CBS1"),
+    ("6", -1863, 498, "IB2S"),
+)
+
 # Pastas de VALUE (Other base) — coordenadas por regra de Issue Date
 _VALUE_PASTE_LEGACY = (
     (-1315, 395),
@@ -71,43 +83,46 @@ _VALUE_PASTE_2026 = (
 )
 
 
+def _tax_click_type_enter(label, x, y, code):
+    # type: (str, int, int, str) -> list
+    """Clique na célula, cola o código (Ctrl+V) e Enter x2 — sem dropdown."""
+    return [
+        Step(
+            "click_and_type",
+            x=x,
+            y=y,
+            text=code,
+            label="{} — Clique e escrever {}".format(label, code),
+        ),
+        Step(
+            "press",
+            keys=["enter"],
+            press_times=2,
+            press_interval=0.3,
+            label="{} — Enter x2 ({})".format(label, code),
+        ),
+    ]
+
+
 def build_steps_before_value(taxes_2026_plus=False):
     # type: (bool) -> list
     """
-    Impostos iniciais + Enter.
-    Antes de 2026: 4 códigos (ICOF/ICM0/IPI0/IPIS) + Enter x5.
-    2026+: + CBS1 e IB2S, 2 cliques extras, Enter x7.
+    Impostos iniciais: clique + código + Enter x2 em cada taxa.
+    Antes de 2026: ICOF/ICM0/IPI0/IPIS (4).
+    2026+: + CBS1 e IB2S (6) e 2 cliques extras antes do VALUE.
     """
     steps = []
-    steps.extend(build_tax_steps("1", -1855, 391, "ICOF", -1821, 432))
-    steps.extend(build_tax_steps("2", -1855, 414, "ICM0", -1798, 452))
-    steps.extend(build_tax_steps("3", -1855, 433, "IPI0", -1789, 474))
-    steps.extend(build_tax_steps("4", -1855, 455, "IPIS", -1789, 494))
+    for label, x, y, code in _TAX_CELLS_LEGACY:
+        steps.extend(_tax_click_type_enter(label, x, y, code))
     if taxes_2026_plus:
-        steps.extend(build_tax_steps("5", -1864, 480, "CBS1", -1825, 515))
-        steps.extend(build_tax_steps("6", -1863, 498, "IB2S", -1825, 540))
+        for label, x, y, code in _TAX_CELLS_2026_EXTRA:
+            steps.extend(_tax_click_type_enter(label, x, y, code))
         steps.append(
-            Step("click", x=-1153, y=477, label="6b — Clique após IB2S")
+            Step("click", x=-1151, y=393, label="6b — Clique após IB2S")
         )
         steps.append(
-            Step("click", x=-1153, y=497, label="6c — Clique após IB2S")
+            Step("click", x=-1151, y=435, label="6c — Clique após IB2S")
         )
-        enter_times = 7
-        enter_label = "7 — Clique e Enter x7"
-    else:
-        enter_times = 5
-        enter_label = "5 — Clique e Enter x5"
-    steps.append(
-        Step(
-            "click_and_press",
-            x=-1852,
-            y=391,
-            keys=["enter"],
-            press_times=enter_times,
-            press_interval=0.3,
-            label=enter_label,
-        )
-    )
     return steps
 
 
@@ -283,7 +298,7 @@ def main(dry_run=False, chained=False, show_done=True, prefill=None):
     print(
         "  taxes_2026_plus: {} ({})".format(
             taxes_2026_plus,
-            "CBS1+IB2S + Enter x7" if taxes_2026_plus else "4 impostos + Enter x5",
+            "CBS1+IB2S (Enter x2/taxa)" if taxes_2026_plus else "4 impostos (Enter x2/taxa)",
         )
     )
 
