@@ -48,8 +48,19 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 ## Rodar o fluxo (máquina já mapeada ou a de referência)
 
+Coloque a planilha em `entrada/lancamentos.xlsx` (colunas **Batch** e **Total Value**).
+
 ```powershell
 python main.py
+```
+
+O bot lê os batches da planilha, pede só o tempo de espera, e no fim compara
+Total Value da planilha com os dois prints da tela (OCR).
+
+Planilha em outro caminho:
+
+```powershell
+python main.py --planilha "C:\caminho\lancamentos.xlsx"
 ```
 
 Emergência: **F10** para a qualquer momento.
